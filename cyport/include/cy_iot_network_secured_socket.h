@@ -90,7 +90,32 @@
  *    #define AWS_IOT_LOG_LEVEL_DEFENDER                  IOT_LOG_ERROR
  *    #define AWS_IOT_LOG_LEVEL_JOBS                      IOT_LOG_ERROR
  *   \endcode
- * 
+ ********************************************************************************
+ * \section section_code_snippet Code Snippets
+ ********************************************************************************
+ ********************************************************************************
+ * \subsection snip1 Code Snippet 1: Initialize MQTT and dependent libraries
+ *  This code snippet demonstrates the initialization of the various libraries like the AWS IoT device SDK, Cypress secure sockets, and the AWS IoT MQTT.
+ * \snippet doxygen_mqtt_code_snippet.h snippet_mqtt_init
+ * \subsection snip2 Code Snippet 2: Non Secure connection to MQTT broker
+ * This code snippet demonstrates the initialization of configuration structures required for a non-secure MQTT connection and the usage of IotMqtt_Connect() API.
+ * \snippet doxygen_mqtt_code_snippet.h snippet_mqtt_connection
+ * \subsection snip3 Code Snippet 3: Secure connection to MQTT broker
+ * This code snippet demonstrates the initialization of configuration structures required for a secure MQTT connection and the usage of IotMqtt_Connect() API.
+ * \snippet doxygen_mqtt_code_snippet.h snippet_mqtt_secure_connection
+ * \subsection snip4 Code Snippet 4: Operation completion callback
+ * MQTT operation completion callback function. Checks for valid parameters and unblocks the waiting thread.
+ * \snippet doxygen_mqtt_code_snippet.h mqttOperationCallback
+ * \subsection snip5 Code Snippet 5: MQTT message publish
+ * This code snippet demonstrates the initialization of the publish message information structure and the usage of IotMqtt_PublishAsync() API.
+ * \snippet doxygen_mqtt_code_snippet.h snippet_mqtt_publish
+ * \subsection snip6 Code Snippet 6: Subscribed message received callback
+ * Callback to handle incoming MQTT messages from the broker.
+ * \snippet doxygen_mqtt_code_snippet.h mqttSubscriptionCallback
+ * \subsection snip7 Code Snippet 7: MQTT message subscribe
+ * This code snippet demonstrates the initialization of the subscription information structure and the usage of IotMqtt_SubscribeAsync() API.
+ * \snippet doxygen_mqtt_code_snippet.h snippet_mqtt_subscribe
+ ********************************************************************************
  * \defgroup mqtt_api_call_sequence API Call Sequence
  * \brief This section provides the details of the API call sequence for performing various MQTT operations. This call sequence uses APIs defined by AWS IoT Device SDK library and the Cypress Platform Port layer.
  *
@@ -190,7 +215,6 @@
  * @ingroup mqtt_cyport
  *
  */
-
 
 /**
  * @file cy_iot_network_secured_socket.h

@@ -10,6 +10,9 @@ Refer to the [README.md](./README.md) for a complete description of the MQTT cli
 
 
 ## Changelog
+### v1.0.1
+* Code snippets added to the documentation
+
 ### v1.0.0
 * Initial release of MQTT library
 
