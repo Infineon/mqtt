@@ -4,12 +4,12 @@
 Refer to the [README.md](./README.md) for a complete description of the MQTT client library
 
 ## Known Issues
-| Problem | Workaround |
-| ------- | ---------- |
-| The implementation of newlib from GCC will leak ~1.4kb of heap memory per task/thread that uses stdio functions (i.e. printf, snprintf, etc.) | By default, only error log messages are enabled in the MQTT client library. It is recommended to enable information or warning messages, only for debugging purposes |
-
+None
 
 ## Changelog
+### v2.0.0
+* Changes to adapt to ModusToolbox 2.2.0 flow and AnyCloud's support for multiple WiFi interfaces - STA, softAP and concurrent STA+softAP mode
+
 ### v1.0.1
 * Code snippets added to the documentation
 
@@ -21,10 +21,7 @@ This version of the library was validated for compatibility with the following s
 
 | Software and Tools                                      | Version |
 | :---                                                    | :----:  |
-| ModusToolbox Software Environment                       | 2.1     |
-| - ModusToolbox Device Configurator                      | 2.1     |
-| - ModusToolbox CSD Personality in Device Configurator   | 2.0     |
-| - ModusToolbox CapSense Configurator / Tuner tools      | 3.0     |
-| PSoC6 Peripheral Driver Library (PDL)                   | 1.5.0   |
-| GCC Compiler                                            | 7.2.1   |
+| ModusToolbox Software Environment                       | 2.2     |
+| PSoC6 Peripheral Driver Library (PDL)                   | 2.0     |
+| GCC Compiler                                            | 9.3.1   |
 | IAR Compiler                                            | 8.32    |
