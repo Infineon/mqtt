@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['topic',['topic',['../structcy__mqtt__subscribe__info__t.html#a7233b6d440d794a302673089552f7acb',1,'cy_mqtt_subscribe_info_t::topic()'],['../structcy__mqtt__publish__info__t.html#aacdf24feaf4d2ceb5c055e50d26ce432',1,'cy_mqtt_publish_info_t::topic()']]],
-  ['topic_5flen',['topic_len',['../structcy__mqtt__subscribe__info__t.html#a2bd950023cbd33864c6bc6343af7b06b',1,'cy_mqtt_subscribe_info_t::topic_len()'],['../structcy__mqtt__publish__info__t.html#ad6c63ce8dd222f55eb6bb3825bee57af',1,'cy_mqtt_publish_info_t::topic_len()']]],
-  ['type',['type',['../structcy__mqtt__event__t.html#a9823ea0788cb4e0bd82efd19d195b13e',1,'cy_mqtt_event_t']]]
+  ['reason',['reason',['../structcy__mqtt__event__t.html#abbc35b761acab1cda2d4f85418f9c32e',1,'cy_mqtt_event_t']]],
+  ['received_5fmessage',['received_message',['../structcy__mqtt__message__t.html#aff56023a8b91ffc90fd9e02c84daa894',1,'cy_mqtt_message_t']]],
+  ['retain',['retain',['../structcy__mqtt__publish__info__t.html#acee256975b49014ea4edf38780759084',1,'cy_mqtt_publish_info_t']]]
 ];

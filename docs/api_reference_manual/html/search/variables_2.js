@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['hostname',['hostname',['../structcy__mqtt__broker__info__t.html#a1573327c42b9dd49610c55aa303e7fea',1,'cy_mqtt_broker_info_t']]],
-  ['hostname_5flen',['hostname_len',['../structcy__mqtt__broker__info__t.html#a38a8850406cc4f8e267e67837a23cd41',1,'cy_mqtt_broker_info_t']]]
+  ['data',['data',['../structcy__mqtt__event__t.html#abcd47d67886ef09e5c10681cdc90df99',1,'cy_mqtt_event_t']]],
+  ['dup',['dup',['../structcy__mqtt__publish__info__t.html#a8f8b93a8110e01a63fdfee9d89464eb0',1,'cy_mqtt_publish_info_t']]]
 ];

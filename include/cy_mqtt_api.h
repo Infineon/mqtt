@@ -1,10 +1,10 @@
 /*
- * Copyright 2020, Cypress Semiconductor Corporation or a subsidiary of
- * Cypress Semiconductor Corporation. All Rights Reserved.
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company) or
+ * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
- * materials ("Software"), is owned by Cypress Semiconductor Corporation
- * or one of its subsidiaries ("Cypress") and is protected by and subject to
+ * materials ("Software") is owned by Cypress Semiconductor Corporation
+ * or one of its affiliates ("Cypress") and is protected by and subject to
  * worldwide patent protection (United States and foreign),
  * United States copyright laws and international treaty provisions.
  * Therefore, you may use this Software only as provided in the license
@@ -13,7 +13,7 @@
  * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
  * non-transferable license to copy, modify, and compile the Software
  * source code solely for use in connection with Cypress's
- * integrated circuit products. Any reproduction, modification, translation,
+ * integrated circuit products.  Any reproduction, modification, translation,
  * compilation, or representation of this Software except as specified
  * above is prohibited without the express written permission of Cypress.
  *
@@ -163,48 +163,81 @@ extern "C" {
 #define CY_RSLT_MODULE_MQTT_HANDSHAKE_FAILED                       ( CY_RSLT_MQTT_ERR_BASE + 19 )
 
 /**
+ * MQTT event type for subscribed message receive event.
+ * Macro is added for library backward compatibility.
+ * \note This macro is defined only for backward compatibility. Application should not modify this macro.
+ */
+#define CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE       CY_MQTT_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECEIVE
+
+/**
  * Minimum network buffer size in bytes, for sending and receiving an MQTT packet.
- * 
+ *
  * \note 
  *    This is the default value configured in the library. This value can be modified to suit the application use case requirements.
  *
  */
-#define CY_MQTT_MIN_NETWORK_BUFFER_SIZE       ( 256U )
+#define CY_MQTT_MIN_NETWORK_BUFFER_SIZE          ( 256U )
 
 /**
- * Transport timeout in milliseconds for transport send.
+ * Maximum wait time in milliseconds to receive acknowledgment packet from the MQTT broker for QoS1/QoS2 Publish/Subscribe message.
+ * MQTT library function returns to the caller immediately, if the MQTT acknowledgment message is received before the timeout/wait time. Else, the function returns the failure status at the end of wait time.
+ * \note
+ *    This is the default value configured in the library. This value can be modified depending on the network condition.
+ *
  */
-#ifndef CY_MQTT_SEND_TIMEOUT_MS
-#define CY_MQTT_SEND_TIMEOUT_MS               ( 3000U )
+#ifndef CY_MQTT_ACK_RECEIVE_TIMEOUT_MS
+#define CY_MQTT_ACK_RECEIVE_TIMEOUT_MS           ( 3000U )
 #endif
 
 /**
- * Transport timeout in milliseconds for transport receive.
+ * MQTT message send timeout in milliseconds.
+ * MQTT library function returns to the caller immediately, if the MQTT message is sent before the timeout/wait time. Else, the function returns the failure status at the end of wait time.
+ * \note
+ *    This is the default value configured in the library. This value can be modified depending on the network condition.
+ *
  */
-#ifndef CY_MQTT_RECV_TIMEOUT_MS
-#define CY_MQTT_RECV_TIMEOUT_MS               ( 3000U )
+#ifndef CY_MQTT_MESSAGE_SEND_TIMEOUT_MS
+#define CY_MQTT_MESSAGE_SEND_TIMEOUT_MS          ( 3000U )
+#endif
+
+/**
+ * MQTT message receive timeout for the subscribed topic, represented in milliseconds.
+ * MQTT network receive function waits for this timeout value, in case if partial data is received from the network socket. If the complete data is received before this timeout value, the network receive functions returns to the caller immediately after reading the requested data from the socket.
+ * \note
+ *    This is the default value configured in the library. This value can be modified depending on the network condition.
+ *
+ */
+#ifndef CY_MQTT_MESSAGE_RECEIVE_TIMEOUT_MS
+#define CY_MQTT_MESSAGE_RECEIVE_TIMEOUT_MS       ( 500U )
+#endif
+
+/**
+ * Maximum number of retry for MQTT publish/subscribe/unsubcribe message send.
+ *
+ * \note
+ *    This is the default value configured in the library. This value can be modified by defining macro in application makefile.
+ *
+ */
+#ifndef CY_MQTT_MAX_RETRY_VALUE
+#define CY_MQTT_MAX_RETRY_VALUE                  ( 3U )
 #endif
 
 /**
  * Maximum number of MQTT instances supported.
  */
-#define CY_MQTT_MAX_HANDLE                    ( 2U )
+#define CY_MQTT_MAX_HANDLE                       ( 2U )
 
 /**
  * Configure value of maximum number of outgoing publishes maintained in MQTT library
  * until an ack is received from the broker.
  */
-#ifndef CY_MQTT_MAX_OUTGOING_PUBLISHES
-#define CY_MQTT_MAX_OUTGOING_PUBLISHES        ( 1U )
-#endif
+#define CY_MQTT_MAX_OUTGOING_PUBLISHES           ( 1U )
 
 /**
  * Configure value of maximum number of outgoing subscription topics maintained in MQTT library
  * until an ack is received from the broker.
  */
-#ifndef CY_MQTT_MAX_OUTGOING_SUBSCRIBES
-#define CY_MQTT_MAX_OUTGOING_SUBSCRIBES       ( 5U )
-#endif
+#define CY_MQTT_MAX_OUTGOING_SUBSCRIBES          ( 5U )
 
 /**
  * @}
@@ -222,13 +255,14 @@ extern "C" {
  *                   Enumerations
  ******************************************************/
 /**
- * MQTT supported QoS levels.
+ * MQTT QoS levels.
  */
 typedef enum cy_mqtt_qos
 {
-    CY_MQTT_QOS0 = 0, /**< Delivery at most once. */
-    CY_MQTT_QOS1 = 1, /**< Delivery at least once. */
-    CY_MQTT_QOS2 = 2  /**< Delivery exactly once. */
+    CY_MQTT_QOS0        = 0,  /**< Delivery at most once. */
+    CY_MQTT_QOS1        = 1,  /**< Delivery at least once. */
+    CY_MQTT_QOS2        = 2,  /**< Delivery exactly once. */
+    CY_MQTT_QOS_INVALID = -1  /**< Invalid QoS. */
 } cy_mqtt_qos_t;
 
 /**
@@ -236,8 +270,8 @@ typedef enum cy_mqtt_qos
  */
 typedef enum cy_mqtt_event_type
 {
-    CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE = 0, /**< Incoming publish message */
-    CY_MQTT_EVENT_TYPE_DISCONNECT      = 1  /**< Disconnected from MQTT broker. */
+    CY_MQTT_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECEIVE = 0, /**< Message from the subscribed topic. */
+    CY_MQTT_EVENT_TYPE_DISCONNECT                   = 1  /**< Disconnected from MQTT broker. */
 } cy_mqtt_event_type_t;
 
 /**
@@ -278,13 +312,15 @@ typedef void * cy_mqtt_t;
  */
 typedef struct cy_mqtt_subscribe_info
 {
-    cy_mqtt_qos_t  qos;        /**< Quality of Service for subscription. */
-    const char     *topic;     /**< Topic filter to subscribe to. */
-    uint16_t       topic_len;  /**< Length of subscription topic filter. */
+    cy_mqtt_qos_t  qos;           /**< Requested quality of Service for the subscription. */
+    const char     *topic;        /**< Topic filter to subscribe to. */
+    uint16_t       topic_len;     /**< Length of subscription topic filter. */
+    cy_mqtt_qos_t  allocated_qos; /**< QoS allocated by the broker for the subscription. \ref CY_MQTT_QOS_INVALID indicates subscription failure. */
 } cy_mqtt_subscribe_info_t;
 
 /**
  * MQTT publish information structure.
+ * MQTT messages received on the subscribed topic is also represented using this structure.
  */
 typedef struct cy_mqtt_publish_info
 {
@@ -323,13 +359,19 @@ typedef struct cy_mqtt_connect_info
     cy_mqtt_publish_info_t       *will_info;     /**< MQTT will message. This will info can be NULL. */
  } cy_mqtt_connect_info_t;
 
+ /**
+  * MQTT received message information structure.
+  * \note This type is defined for improving readability and for library backward compatibility.
+  */
+ typedef cy_mqtt_publish_info_t cy_mqtt_received_msg_info_t;
+
 /**
  * Received MQTT publish message information structure.
  */
 typedef struct cy_mqtt_message
 {
-    uint16_t               packet_id;         /**< Packet ID of MQTT packet. */
-    cy_mqtt_publish_info_t received_message;  /**< Receiving MQTT publish message */
+    uint16_t                    packet_id;         /**< Packet ID of the MQTT message. */
+    cy_mqtt_received_msg_info_t received_message;  /**< Received MQTT message from the subscribed topic. */
 } cy_mqtt_message_t;
 
 /**
@@ -337,12 +379,12 @@ typedef struct cy_mqtt_message
  */
 typedef struct cy_mqtt_event
 {
-    cy_mqtt_event_type_t type;            /**< Event type */
+    cy_mqtt_event_type_t type;             /**< Event type */
     union
     {
-        cy_mqtt_disconn_type_t   reason;  /**< Disconnection reason for CY_MQTT_EVENT_TYPE_DISCONNECT */
-        cy_mqtt_message_t        pub_msg; /**< Event data for CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE */
-    } data;                               /**< Event data */
+        cy_mqtt_disconn_type_t   reason;   /**< Disconnection reason for event type \ref CY_MQTT_EVENT_TYPE_DISCONNECT */
+        cy_mqtt_message_t        pub_msg;  /**< Received MQTT message for event type \ref CY_MQTT_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECEIVE */
+    } data;                                /**< Event data */
 } cy_mqtt_event_t;
 
 /**
@@ -445,10 +487,15 @@ cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connec
 cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pub_msg );
 
 /**
- * Subscribes for MQTT message on given MQTT topic.
+ * Subscribes for MQTT message on the given MQTT topic or list of topics.
+ *
+ * \note 
+ *       Single subscription request with multiple topics, this function returns success if at least one of the subscription is successful. 
+ *       If subscription fails for any of the topic in the list, the failure is indicated through 'allocated_qos' set to \ref CY_MQTT_QOS_INVALID. 
+ *       Refer \ref cy_mqtt_subscribe_info_t for more details. Upon return, the 'allocated_qos' indicate the QoS level allocated by the MQTT broker for the successfully subscribed topic.
  *
  * @param mqtt_handle [in]   : MQTT handle created using \ref cy_mqtt_create.
- * @param sub_info [in]      : Pointer to array of MQTT subscription information structure. Refer \ref cy_mqtt_subscribe_info_t for details.
+ * @param sub_info [in, out] : Pointer to array of MQTT subscription information structure. Refer \ref cy_mqtt_subscribe_info_t for details.
  * @param sub_count [in]     : Number of subscription topics in the subscription array.
  *
  * @return cy_rslt_t         : CY_RSLT_SUCCESS on success; error codes in @ref mqtt_defines otherwise.

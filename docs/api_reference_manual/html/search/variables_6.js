@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['reason',['reason',['../structcy__mqtt__event__t.html#abbc35b761acab1cda2d4f85418f9c32e',1,'cy_mqtt_event_t']]],
-  ['received_5fmessage',['received_message',['../structcy__mqtt__message__t.html#ab4eebe18a229ef32394b5411e27a547f',1,'cy_mqtt_message_t']]],
-  ['retain',['retain',['../structcy__mqtt__publish__info__t.html#acee256975b49014ea4edf38780759084',1,'cy_mqtt_publish_info_t']]]
+  ['qos',['qos',['../structcy__mqtt__subscribe__info__t.html#aa4b608145f6dca9d3740d43d83a5f960',1,'cy_mqtt_subscribe_info_t::qos()'],['../structcy__mqtt__publish__info__t.html#ac3dd00abb3e55019b0f41f169f047d65',1,'cy_mqtt_publish_info_t::qos()']]]
 ];

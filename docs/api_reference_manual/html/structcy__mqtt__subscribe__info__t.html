@@ -92,7 +92,7 @@ $(document).ready(function(){initNavTree('structcy__mqtt__subscribe__info__t.htm
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
 <tr class="memitem:aa4b608145f6dca9d3740d43d83a5f960"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__mqtt__struct.html#ga78bd2ae3cdea69f18ffec6a72bbc28be">cy_mqtt_qos_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__mqtt__subscribe__info__t.html#aa4b608145f6dca9d3740d43d83a5f960">qos</a></td></tr>
-<tr class="memdesc:aa4b608145f6dca9d3740d43d83a5f960"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quality of Service for subscription.  <a href="#aa4b608145f6dca9d3740d43d83a5f960">More...</a><br /></td></tr>
+<tr class="memdesc:aa4b608145f6dca9d3740d43d83a5f960"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requested quality of Service for the subscription.  <a href="#aa4b608145f6dca9d3740d43d83a5f960">More...</a><br /></td></tr>
 <tr class="separator:aa4b608145f6dca9d3740d43d83a5f960"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7233b6d440d794a302673089552f7acb"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__mqtt__subscribe__info__t.html#a7233b6d440d794a302673089552f7acb">topic</a></td></tr>
 <tr class="memdesc:a7233b6d440d794a302673089552f7acb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Topic filter to subscribe to.  <a href="#a7233b6d440d794a302673089552f7acb">More...</a><br /></td></tr>
@@ -100,6 +100,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a2bd950023cbd33864c6bc6343af7b06b"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__mqtt__subscribe__info__t.html#a2bd950023cbd33864c6bc6343af7b06b">topic_len</a></td></tr>
 <tr class="memdesc:a2bd950023cbd33864c6bc6343af7b06b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Length of subscription topic filter.  <a href="#a2bd950023cbd33864c6bc6343af7b06b">More...</a><br /></td></tr>
 <tr class="separator:a2bd950023cbd33864c6bc6343af7b06b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab71d487d9ba575b91bb7845e288465d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__mqtt__struct.html#ga78bd2ae3cdea69f18ffec6a72bbc28be">cy_mqtt_qos_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__mqtt__subscribe__info__t.html#aab71d487d9ba575b91bb7845e288465d">allocated_qos</a></td></tr>
+<tr class="memdesc:aab71d487d9ba575b91bb7845e288465d"><td class="mdescLeft">&#160;</td><td class="mdescRight">QoS allocated by the broker for the subscription.  <a href="#aab71d487d9ba575b91bb7845e288465d">More...</a><br /></td></tr>
+<tr class="separator:aab71d487d9ba575b91bb7845e288465d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Field Documentation</h2>
 <a id="aa4b608145f6dca9d3740d43d83a5f960"></a>
@@ -114,7 +117,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Quality of Service for subscription. </p>
+<p>Requested quality of Service for the subscription. </p>
 
 </div>
 </div>
@@ -147,6 +150,23 @@ Data Fields</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Length of subscription topic filter. </p>
+
+</div>
+</div>
+<a id="aab71d487d9ba575b91bb7845e288465d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aab71d487d9ba575b91bb7845e288465d">&#9670;&nbsp;</a></span>allocated_qos</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__mqtt__struct.html#ga78bd2ae3cdea69f18ffec6a72bbc28be">cy_mqtt_qos_t</a> cy_mqtt_subscribe_info_t::allocated_qos</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>QoS allocated by the broker for the subscription. </p>
+<p><a class="el" href="group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28beaac77e0934620e20e664d3145facf6486">CY_MQTT_QOS_INVALID</a> indicates subscription failure. </p>
 
 </div>
 </div>

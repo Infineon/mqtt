@@ -92,12 +92,11 @@ $(document).ready(function(){initNavTree('structcy__mqtt__message__t.html','');}
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
 <tr class="memitem:ae158e70e0ed56cfa2fe80a2e6407b1bc"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__mqtt__message__t.html#ae158e70e0ed56cfa2fe80a2e6407b1bc">packet_id</a></td></tr>
-<tr class="memdesc:ae158e70e0ed56cfa2fe80a2e6407b1bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packet ID of MQTT packet.  <a href="#ae158e70e0ed56cfa2fe80a2e6407b1bc">More...</a><br /></td></tr>
+<tr class="memdesc:ae158e70e0ed56cfa2fe80a2e6407b1bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packet ID of the MQTT message.  <a href="#ae158e70e0ed56cfa2fe80a2e6407b1bc">More...</a><br /></td></tr>
 <tr class="separator:ae158e70e0ed56cfa2fe80a2e6407b1bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab4eebe18a229ef32394b5411e27a547f"><td class="memItemLeft" align="right" valign="top"><a id="ab4eebe18a229ef32394b5411e27a547f"></a>
-<a class="el" href="structcy__mqtt__publish__info__t.html">cy_mqtt_publish_info_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__mqtt__message__t.html#ab4eebe18a229ef32394b5411e27a547f">received_message</a></td></tr>
-<tr class="memdesc:ab4eebe18a229ef32394b5411e27a547f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Receiving MQTT publish message. <br /></td></tr>
-<tr class="separator:ab4eebe18a229ef32394b5411e27a547f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff56023a8b91ffc90fd9e02c84daa894"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__mqtt__struct.html#gac201fb43c325826b1b2c83b2eb8052cf">cy_mqtt_received_msg_info_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__mqtt__message__t.html#aff56023a8b91ffc90fd9e02c84daa894">received_message</a></td></tr>
+<tr class="memdesc:aff56023a8b91ffc90fd9e02c84daa894"><td class="mdescLeft">&#160;</td><td class="mdescRight">Received MQTT message from the subscribed topic.  <a href="#aff56023a8b91ffc90fd9e02c84daa894">More...</a><br /></td></tr>
+<tr class="separator:aff56023a8b91ffc90fd9e02c84daa894"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Field Documentation</h2>
 <a id="ae158e70e0ed56cfa2fe80a2e6407b1bc"></a>
@@ -112,7 +111,23 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Packet ID of MQTT packet. </p>
+<p>Packet ID of the MQTT message. </p>
+
+</div>
+</div>
+<a id="aff56023a8b91ffc90fd9e02c84daa894"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aff56023a8b91ffc90fd9e02c84daa894">&#9670;&nbsp;</a></span>received_message</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__mqtt__struct.html#gac201fb43c325826b1b2c83b2eb8052cf">cy_mqtt_received_msg_info_t</a> cy_mqtt_message_t::received_message</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Received MQTT message from the subscribed topic. </p>
 
 </div>
 </div>

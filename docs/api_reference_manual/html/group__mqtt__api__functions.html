@@ -112,7 +112,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga2b565253902a622a2c275c61ef1fd84f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publishes the MQTT message on given MQTT topic.  <a href="#ga2b565253902a622a2c275c61ef1fd84f">More...</a><br /></td></tr>
 <tr class="separator:ga2b565253902a622a2c275c61ef1fd84f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac9e1748d2425be6923069fa6f7125fb5"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mqtt__api__functions.html#gac9e1748d2425be6923069fa6f7125fb5">cy_mqtt_subscribe</a> (cy_mqtt_t mqtt_handle, <a class="el" href="structcy__mqtt__subscribe__info__t.html">cy_mqtt_subscribe_info_t</a> *sub_info, uint8_t sub_count)</td></tr>
-<tr class="memdesc:gac9e1748d2425be6923069fa6f7125fb5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subscribes for MQTT message on given MQTT topic.  <a href="#gac9e1748d2425be6923069fa6f7125fb5">More...</a><br /></td></tr>
+<tr class="memdesc:gac9e1748d2425be6923069fa6f7125fb5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subscribes for MQTT message on the given MQTT topic or list of topics.  <a href="#gac9e1748d2425be6923069fa6f7125fb5">More...</a><br /></td></tr>
 <tr class="separator:gac9e1748d2425be6923069fa6f7125fb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga5bf4f13c41463bd239f2940a02401121"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mqtt__api__functions.html#ga5bf4f13c41463bd239f2940a02401121">cy_mqtt_unsubscribe</a> (cy_mqtt_t mqtt_handle, <a class="el" href="group__mqtt__struct.html#gafd0d1488be43b96eef830bb7f8c1653e">cy_mqtt_unsubscribe_info_t</a> *unsub_info, uint8_t unsub_count)</td></tr>
 <tr class="memdesc:ga5bf4f13c41463bd239f2940a02401121"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unsubscribes from a given MQTT topic.  <a href="#ga5bf4f13c41463bd239f2940a02401121">More...</a><br /></td></tr>
@@ -360,11 +360,12 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Subscribes for MQTT message on given MQTT topic. </p>
+<p>Subscribes for MQTT message on the given MQTT topic or list of topics. </p>
+<dl class="section note"><dt>Note</dt><dd>Single subscription request with multiple topics, this function returns success if at least one of the subscription is successful. If subscription fails for any of the topic in the list, the failure is indicated through 'allocated_qos' set to <a class="el" href="group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28beaac77e0934620e20e664d3145facf6486">CY_MQTT_QOS_INVALID</a>. Refer <a class="el" href="structcy__mqtt__subscribe__info__t.html">cy_mqtt_subscribe_info_t</a> for more details. Upon return, the 'allocated_qos' indicate the QoS level allocated by the MQTT broker for the successfully subscribed topic.</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">mqtt_handle</td><td>[in] : MQTT handle created using <a class="el" href="group__mqtt__api__functions.html#ga6637e2df9ebc12dfb98841fc38c88ce9">cy_mqtt_create</a>. </td></tr>
-    <tr><td class="paramname">sub_info</td><td>[in] : Pointer to array of MQTT subscription information structure. Refer <a class="el" href="structcy__mqtt__subscribe__info__t.html">cy_mqtt_subscribe_info_t</a> for details. </td></tr>
+    <tr><td class="paramname">sub_info</td><td>[in, out] : Pointer to array of MQTT subscription information structure. Refer <a class="el" href="structcy__mqtt__subscribe__info__t.html">cy_mqtt_subscribe_info_t</a> for details. </td></tr>
     <tr><td class="paramname">sub_count</td><td>[in] : Number of subscription topics in the subscription array.</td></tr>
   </table>
   </dd>

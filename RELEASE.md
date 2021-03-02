@@ -10,6 +10,11 @@ None.
 
 ## Changelog
 
+### v3.1.0
+- Performance improvements.
+
+- Documentation updates.
+
 ### v3.0.0
 - Supports QoS-2.
 
@@ -40,6 +45,6 @@ This version of the library was validated for compatibility with the following s
 | Software and Tools                                      | Version |
 | :---                                                    | :----:  |
 | ModusToolbox Software Environment                       | 2.2     |
-| PSoC 6 Peripheral Driver Library (PDL)                   | 2.0     |
+| PSoC 6 Peripheral Driver Library (PDL)                  | 2.0     |
 | GCC Compiler                                            | 9.3.1   |
 | IAR Compiler                                            | 8.32    |

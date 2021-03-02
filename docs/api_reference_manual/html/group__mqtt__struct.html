@@ -114,6 +114,9 @@ Data Structures</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
+<tr class="memitem:gac201fb43c325826b1b2c83b2eb8052cf"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="structcy__mqtt__publish__info__t.html">cy_mqtt_publish_info_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mqtt__struct.html#gac201fb43c325826b1b2c83b2eb8052cf">cy_mqtt_received_msg_info_t</a></td></tr>
+<tr class="memdesc:gac201fb43c325826b1b2c83b2eb8052cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT received message information structure.  <a href="#gac201fb43c325826b1b2c83b2eb8052cf">More...</a><br /></td></tr>
+<tr class="separator:gac201fb43c325826b1b2c83b2eb8052cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gafd0d1488be43b96eef830bb7f8c1653e"><td class="memItemLeft" align="right" valign="top"><a id="gafd0d1488be43b96eef830bb7f8c1653e"></a>
 typedef <a class="el" href="structcy__mqtt__subscribe__info__t.html">cy_mqtt_subscribe_info_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mqtt__struct.html#gafd0d1488be43b96eef830bb7f8c1653e">cy_mqtt_unsubscribe_info_t</a></td></tr>
 <tr class="memdesc:gafd0d1488be43b96eef830bb7f8c1653e"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT unsubscribe information structure. <br /></td></tr>
@@ -126,13 +129,15 @@ Enumerations</h2></td></tr>
 <br />
 &#160;&#160;<a class="el" href="group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28beac08dce78d352bab0f02ad032821ccf20">CY_MQTT_QOS1</a> = 1, 
 <br />
-&#160;&#160;<a class="el" href="group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28bead53bc925a9202da727dcead158c6d890">CY_MQTT_QOS2</a> = 2
+&#160;&#160;<a class="el" href="group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28bead53bc925a9202da727dcead158c6d890">CY_MQTT_QOS2</a> = 2, 
 <br />
- }<tr class="memdesc:ga78bd2ae3cdea69f18ffec6a72bbc28be"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT supported QoS levels.  <a href="group__mqtt__struct.html#ga78bd2ae3cdea69f18ffec6a72bbc28be">More...</a><br /></td></tr>
+&#160;&#160;<a class="el" href="group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28beaac77e0934620e20e664d3145facf6486">CY_MQTT_QOS_INVALID</a> = -1
+<br />
+ }<tr class="memdesc:ga78bd2ae3cdea69f18ffec6a72bbc28be"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT QoS levels.  <a href="group__mqtt__struct.html#ga78bd2ae3cdea69f18ffec6a72bbc28be">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:ga78bd2ae3cdea69f18ffec6a72bbc28be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga1cefedb516ade340c9a829ec7b998fba"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mqtt__struct.html#ga1cefedb516ade340c9a829ec7b998fba">cy_mqtt_event_type_t</a> { <br />
-&#160;&#160;<a class="el" href="group__mqtt__struct.html#gga1cefedb516ade340c9a829ec7b998fbaa47cb2b095da4f477318ea1f37b58b330">CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE</a> = 0, 
+&#160;&#160;<a class="el" href="group__mqtt__struct.html#gga1cefedb516ade340c9a829ec7b998fbaac017ae74a362a60128e4bc0482a085de">CY_MQTT_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECEIVE</a> = 0, 
 <br />
 &#160;&#160;<a class="el" href="group__mqtt__struct.html#gga1cefedb516ade340c9a829ec7b998fbaa0a7b7d2061d3a6331115e521c16fa0fb">CY_MQTT_EVENT_TYPE_DISCONNECT</a> = 1
 <br />
@@ -148,6 +153,24 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr class="separator:ga4e499e4898c3baae910860d7ce73f300"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Typedef Documentation</h2>
+<a id="gac201fb43c325826b1b2c83b2eb8052cf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gac201fb43c325826b1b2c83b2eb8052cf">&#9670;&nbsp;</a></span>cy_mqtt_received_msg_info_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="structcy__mqtt__publish__info__t.html">cy_mqtt_publish_info_t</a> <a class="el" href="group__mqtt__struct.html#gac201fb43c325826b1b2c83b2eb8052cf">cy_mqtt_received_msg_info_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>MQTT received message information structure. </p>
+<dl class="section note"><dt>Note</dt><dd>This type is defined for improving readability and for library backward compatibility. </dd></dl>
+
+</div>
+</div>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="ga78bd2ae3cdea69f18ffec6a72bbc28be"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ga78bd2ae3cdea69f18ffec6a72bbc28be">&#9670;&nbsp;</a></span>cy_mqtt_qos_t</h2>
@@ -161,13 +184,15 @@ Enumerations</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>MQTT supported QoS levels. </p>
+<p>MQTT QoS levels. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga78bd2ae3cdea69f18ffec6a72bbc28beac5d2a5215667dd6c5a2edf4146a50c87"></a>CY_MQTT_QOS0&#160;</td><td class="fielddoc"><p>Delivery at most once. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="gga78bd2ae3cdea69f18ffec6a72bbc28beac08dce78d352bab0f02ad032821ccf20"></a>CY_MQTT_QOS1&#160;</td><td class="fielddoc"><p>Delivery at least once. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="gga78bd2ae3cdea69f18ffec6a72bbc28bead53bc925a9202da727dcead158c6d890"></a>CY_MQTT_QOS2&#160;</td><td class="fielddoc"><p>Delivery exactly once. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga78bd2ae3cdea69f18ffec6a72bbc28beaac77e0934620e20e664d3145facf6486"></a>CY_MQTT_QOS_INVALID&#160;</td><td class="fielddoc"><p>Invalid QoS. </p>
 </td></tr>
 </table>
 
@@ -187,7 +212,7 @@ Enumerations</h2></td></tr>
 
 <p>MQTT event types. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga1cefedb516ade340c9a829ec7b998fbaa47cb2b095da4f477318ea1f37b58b330"></a>CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE&#160;</td><td class="fielddoc"><p>Incoming publish message. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga1cefedb516ade340c9a829ec7b998fbaac017ae74a362a60128e4bc0482a085de"></a>CY_MQTT_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECEIVE&#160;</td><td class="fielddoc"><p>Message from the subscribed topic. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="gga1cefedb516ade340c9a829ec7b998fbaa0a7b7d2061d3a6331115e521c16fa0fb"></a>CY_MQTT_EVENT_TYPE_DISCONNECT&#160;</td><td class="fielddoc"><p>Disconnected from MQTT broker. </p>
 </td></tr>

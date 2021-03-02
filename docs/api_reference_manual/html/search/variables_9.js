@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['will_5finfo',['will_info',['../structcy__mqtt__connect__info__t.html#a0238ef1799952c8eeaf4c61c9187c3a6',1,'cy_mqtt_connect_info_t']]]
+  ['username',['username',['../structcy__mqtt__connect__info__t.html#a001bec6fbce4e77575d99f23c12c0d08',1,'cy_mqtt_connect_info_t']]],
+  ['username_5flen',['username_len',['../structcy__mqtt__connect__info__t.html#a9b0570bc04fe78767b65245a3ff5fffc',1,'cy_mqtt_connect_info_t']]]
 ];

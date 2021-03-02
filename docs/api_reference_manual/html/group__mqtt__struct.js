@@ -3,7 +3,8 @@ var group__mqtt__struct =
     [ "cy_mqtt_subscribe_info_t", "structcy__mqtt__subscribe__info__t.html", [
       [ "qos", "structcy__mqtt__subscribe__info__t.html#aa4b608145f6dca9d3740d43d83a5f960", null ],
       [ "topic", "structcy__mqtt__subscribe__info__t.html#a7233b6d440d794a302673089552f7acb", null ],
-      [ "topic_len", "structcy__mqtt__subscribe__info__t.html#a2bd950023cbd33864c6bc6343af7b06b", null ]
+      [ "topic_len", "structcy__mqtt__subscribe__info__t.html#a2bd950023cbd33864c6bc6343af7b06b", null ],
+      [ "allocated_qos", "structcy__mqtt__subscribe__info__t.html#aab71d487d9ba575b91bb7845e288465d", null ]
     ] ],
     [ "cy_mqtt_publish_info_t", "structcy__mqtt__publish__info__t.html", [
       [ "qos", "structcy__mqtt__publish__info__t.html#ac3dd00abb3e55019b0f41f169f047d65", null ],
@@ -32,7 +33,7 @@ var group__mqtt__struct =
     ] ],
     [ "cy_mqtt_message_t", "structcy__mqtt__message__t.html", [
       [ "packet_id", "structcy__mqtt__message__t.html#ae158e70e0ed56cfa2fe80a2e6407b1bc", null ],
-      [ "received_message", "structcy__mqtt__message__t.html#ab4eebe18a229ef32394b5411e27a547f", null ]
+      [ "received_message", "structcy__mqtt__message__t.html#aff56023a8b91ffc90fd9e02c84daa894", null ]
     ] ],
     [ "cy_mqtt_event_t", "structcy__mqtt__event__t.html", [
       [ "type", "structcy__mqtt__event__t.html#a9823ea0788cb4e0bd82efd19d195b13e", null ],
@@ -40,14 +41,16 @@ var group__mqtt__struct =
       [ "pub_msg", "structcy__mqtt__event__t.html#a73dadd9c182b0786d9ed11fb7bb91c65", null ],
       [ "data", "structcy__mqtt__event__t.html#abcd47d67886ef09e5c10681cdc90df99", null ]
     ] ],
+    [ "cy_mqtt_received_msg_info_t", "group__mqtt__struct.html#gac201fb43c325826b1b2c83b2eb8052cf", null ],
     [ "cy_mqtt_unsubscribe_info_t", "group__mqtt__struct.html#gafd0d1488be43b96eef830bb7f8c1653e", null ],
     [ "cy_mqtt_qos_t", "group__mqtt__struct.html#ga78bd2ae3cdea69f18ffec6a72bbc28be", [
       [ "CY_MQTT_QOS0", "group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28beac5d2a5215667dd6c5a2edf4146a50c87", null ],
       [ "CY_MQTT_QOS1", "group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28beac08dce78d352bab0f02ad032821ccf20", null ],
-      [ "CY_MQTT_QOS2", "group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28bead53bc925a9202da727dcead158c6d890", null ]
+      [ "CY_MQTT_QOS2", "group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28bead53bc925a9202da727dcead158c6d890", null ],
+      [ "CY_MQTT_QOS_INVALID", "group__mqtt__struct.html#gga78bd2ae3cdea69f18ffec6a72bbc28beaac77e0934620e20e664d3145facf6486", null ]
     ] ],
     [ "cy_mqtt_event_type_t", "group__mqtt__struct.html#ga1cefedb516ade340c9a829ec7b998fba", [
-      [ "CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE", "group__mqtt__struct.html#gga1cefedb516ade340c9a829ec7b998fbaa47cb2b095da4f477318ea1f37b58b330", null ],
+      [ "CY_MQTT_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECEIVE", "group__mqtt__struct.html#gga1cefedb516ade340c9a829ec7b998fbaac017ae74a362a60128e4bc0482a085de", null ],
       [ "CY_MQTT_EVENT_TYPE_DISCONNECT", "group__mqtt__struct.html#gga1cefedb516ade340c9a829ec7b998fbaa0a7b7d2061d3a6331115e521c16fa0fb", null ]
     ] ],
     [ "cy_mqtt_disconn_type_t", "group__mqtt__struct.html#ga4e499e4898c3baae910860d7ce73f300", [

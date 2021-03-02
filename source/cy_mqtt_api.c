@@ -1,10 +1,10 @@
 /*
- * Copyright 2020, Cypress Semiconductor Corporation or a subsidiary of
- * Cypress Semiconductor Corporation. All Rights Reserved.
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company) or
+ * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
- * materials ("Software"), is owned by Cypress Semiconductor Corporation
- * or one of its subsidiaries ("Cypress") and is protected by and subject to
+ * materials ("Software") is owned by Cypress Semiconductor Corporation
+ * or one of its affiliates ("Cypress") and is protected by and subject to
  * worldwide patent protection (United States and foreign),
  * United States copyright laws and international treaty provisions.
  * Therefore, you may use this Software only as provided in the license
@@ -13,7 +13,7 @@
  * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
  * non-transferable license to copy, modify, and compile the Software
  * source code solely for use in connection with Cypress's
- * integrated circuit products. Any reproduction, modification, translation,
+ * integrated circuit products.  Any reproduction, modification, translation,
  * compilation, or representation of this Software except as specified
  * above is prohibited without the express written permission of Cypress.
  *
@@ -56,21 +56,19 @@
 #define CY_MQTT_CONNACK_RECV_TIMEOUT_MS                      ( 2000U )
 
 /**
- * Timeout for receiving PUBACK/PUBREL packet in milliseconds.
+ * Network socket receive timeout in milliseconds.
  */
-#define CY_MQTT_PUBACK_PUBREC_TIMEOUT_MS                     ( 2000U )
+#define CY_MQTT_SOCKET_RECEIVE_TIMEOUT_MS                    ( 1U )
 
 /**
- * Timeout for MQTT_ProcessLoop function in milliseconds.
+ * Timeout in milliseconds for ProcessLoop.
  */
-#define CY_MQTT_PROCESS_LOOP_TIMEOUT_MS                      ( 100U )
+#define CY_MQTT_RECEIVE_DATA_TIMEOUT_MS                      ( 0U )
 
 /**
- * Receive thread sleep time in miliseconds.
+ * Receive thread sleep time in milliseconds.
  */
-#ifndef CY_MQTT_RECEIVE_THREAD_SLEEP_MS
 #define CY_MQTT_RECEIVE_THREAD_SLEEP_MS                      ( 100U )
-#endif
 
 #ifndef CY_MQTT_RECEIVE_THREAD_STACK_SIZE
     #ifdef ENABLE_MQTT_LOGS
@@ -87,8 +85,6 @@
 #endif
 
 #define CY_MQTT_RECEIVE_THREAD_PRIORITY                      ( CY_RTOS_PRIORITY_NORMAL )
-
-#define CY_MQTT_PUB_MAX_RETRY                                ( 5U )
 
 #define CY_MQTT_DISCONNECT_EVENT_QUEUE_SIZE                  ( CY_MQTT_MAX_HANDLE )
 
@@ -118,7 +114,7 @@
  ******************************************************/
 
 /**
- * Structure to keep the MQTT PUBLISH packets until an ack is received
+ * Structure to keep the MQTT PUBLISH packets until an ACK is received
  * for QoS1 and QoS2 publishes.
  */
 typedef struct publishpackets
@@ -128,7 +124,7 @@ typedef struct publishpackets
 } cy_mqtt_pubpack_t;
 
 /**
- * Structure to keep the MQTT PUBLISH packetack infomation
+ * Structure to keep the MQTT PUBLISH packet ACK information
  * for QoS1 and QoS2 publishes.
  */
 typedef struct publishpacket_ackstatus
@@ -154,7 +150,9 @@ typedef struct mqtt_object
     cy_awsport_ssl_credentials_t    security;                  /**< MQTT secure connection credentials. */
     cy_thread_t                     recv_thread;               /**< Receive thread handle. */
     cy_mqtt_callback_t              mqtt_event_cb;             /**< MQTT application callback for events. */
-    MQTTSubAckStatus_t              sub_ack_status;            /**< MQTT SUBSCRIBE command ACK status. */
+    MQTTSubAckStatus_t              sub_ack_status[ CY_MQTT_MAX_OUTGOING_SUBSCRIBES ]; /**< MQTT SUBSCRIBE command ACK status. */
+    uint8_t                         num_of_subs_in_req;        /**< Number of subscription messages in outstanding MQTT subscribe request. */
+    bool                            unsub_ack_received;        /**< Status of unsubscribe acknowledgment. */
     cy_mqtt_pub_ack_status_t        pub_ack_status;            /**< MQTT PUBLISH packetack received status. */
     uint16_t                        sent_packet_id;            /**< MQTT packet ID. */
     cy_mqtt_pubpack_t               outgoing_pub_packets[ CY_MQTT_MAX_OUTGOING_PUBLISHES ]; /**< MQTT PUBLISH packet. */
@@ -236,19 +234,26 @@ static cy_rslt_t mqtt_cleanup_outgoing_publish_with_packet_id( cy_mqtt_object_t 
 
 static cy_rslt_t mqtt_update_suback_status( cy_mqtt_object_t *mqtt_obj, MQTTPacketInfo_t *packet_info )
 {
-    uint8_t        *payload = NULL;
-    size_t         payload_size = 0;
+    uint8_t        *payload = NULL, i = 0;
+    size_t         num_of_subscriptions = 0;
     MQTTStatus_t   mqttStatus = MQTTSuccess;
 
-    mqttStatus = MQTT_GetSubAckStatusCodes( packet_info, &payload, &payload_size );
-    if( mqttStatus != MQTTSuccess )
+    mqttStatus = MQTT_GetSubAckStatusCodes( packet_info, &payload, &num_of_subscriptions );
+    if( (mqttStatus != MQTTSuccess) || (num_of_subscriptions != mqtt_obj->num_of_subs_in_req) )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT_GetSubAckStatusCodes failed with status = %s.", MQTT_Status_strerror( mqttStatus ) );
+        /* SubAckStatusCodes are not available for outstanding subscription messages waiting for acknowledgment. So Setting num_of_subs_in_req to 0.*/
+        mqtt_obj->num_of_subs_in_req = 0;
         return CY_RSLT_MODULE_MQTT_ERROR;
     }
     ( void ) mqttStatus;
-    /*Subscribes to one topic, so only one status code is returned. */
-    mqtt_obj->sub_ack_status = (MQTTSubAckStatus_t)payload[ 0 ];
+
+    for( i = 0; i < mqtt_obj->num_of_subs_in_req; i++ )
+    {
+        mqtt_obj->sub_ack_status[i] = (MQTTSubAckStatus_t)payload[ i ];
+    }
+    /* All outstanding subscription message acknowledgment status is updated. So Setting num_of_subs_in_req to 0. */
+    mqtt_obj->num_of_subs_in_req = 0;
     return CY_RSLT_SUCCESS;
 }
 
@@ -482,23 +487,24 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
         {
             case MQTT_PACKET_TYPE_SUBACK:
 
-                /* A SUBACK from the broker, containing the server response to our subscription request, has been received.
-                 * It contains the status code indicating server approval/rejection for the subscription to the single topic
-                 * requested. The SUBACK will be parsed to obtain the status code; this status code will be stored in the MQTT object
-                 * member 'sub_ack_status'. */
-                result = mqtt_update_suback_status( mqtt_obj, param_packet_info );
-                if( result != CY_RSLT_SUCCESS )
-                {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n mqtt_update_suback_status failed..!\n" );
-                }
-
                 /* Make sure that the ACK packet identifier matches with the Request packet identifier. */
                 if( mqtt_obj->sent_packet_id != packet_id )
                 {
                     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nSUBACK packet identifier does not matches with Request packet identifier." );
                 }
-
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nSUBACK packet identifier matches with Request packet identifier." );
+                else
+                {
+                    /* A SUBACK from the broker, containing the server response to our subscription request, has been received.
+                     * It contains the status code indicating server approval/rejection for the subscription to the single topic
+                     * requested. The SUBACK will be parsed to obtain the status code; this status code will be stored in the MQTT object
+                     * member 'sub_ack_status'. */
+                    result = mqtt_update_suback_status( mqtt_obj, param_packet_info );
+                    if( result != CY_RSLT_SUCCESS )
+                    {
+                        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n mqtt_update_suback_status failed..!\n" );
+                    }
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nSUBACK packet identifier matches with Request packet identifier." );
+                }
                 break;
 
             case MQTT_PACKET_TYPE_UNSUBACK:
@@ -506,8 +512,13 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
                 if( mqtt_obj->sent_packet_id != packet_id )
                 {
                     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nUNSUBACK packet identifier does not matches with Request packet identifier." );
+                    mqtt_obj->unsub_ack_received = false;
                 }
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nUNSUBACK packet identifier matches with Request packet identifier." );
+                else
+                {
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nUNSUBACK packet identifier matches with Request packet identifier." );
+                    mqtt_obj->unsub_ack_received = true;
+                }
                 break;
 
             case MQTT_PACKET_TYPE_PINGRESP:
@@ -640,6 +651,48 @@ static cy_rslt_t mqtt_establish_session( cy_mqtt_object_t *mqtt_obj,
 }
 
 /*----------------------------------------------------------------------------------------------------------*/
+int32_t mqtt_awsport_network_receive( NetworkContext_t *network_context, void *buffer, size_t bytes_recv )
+{
+    int32_t bytes_received = 0, total_received = 0;
+    size_t entryTimeMs = 0U, exitTimeMs = 0, remainingTimeMs = 0, elapsedTimeMs = 0U;;
+    size_t bytestoread = 0;
+
+    remainingTimeMs = CY_MQTT_MESSAGE_RECEIVE_TIMEOUT_MS;
+
+    do
+    {
+        bytestoread = (size_t)bytes_recv - total_received;
+        entryTimeMs = Clock_GetTimeMs();
+        bytes_received = cy_awsport_network_receive( network_context, (void *)((char *)buffer + total_received), bytestoread );
+        exitTimeMs = Clock_GetTimeMs();
+        elapsedTimeMs = exitTimeMs - entryTimeMs;
+        if( bytes_received < 0 )
+        {
+            return bytes_received;
+        }
+        else if( bytes_received == 0 )
+        {
+            if( total_received == 0 )
+            {
+                /* No data in the socket, so return. */
+                break;
+            }
+        }
+        else
+        {
+            total_received = total_received + bytes_received;
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n Total Bytes Received = %u", (unsigned int)total_received );
+            /* Reset the wait time as some data is received. */
+            elapsedTimeMs = 0;
+            remainingTimeMs = CY_MQTT_MESSAGE_RECEIVE_TIMEOUT_MS;
+        }
+        remainingTimeMs = remainingTimeMs - elapsedTimeMs;
+    } while( (total_received < bytes_recv) && (remainingTimeMs > 0) );
+
+    return total_received;
+}
+
+/*----------------------------------------------------------------------------------------------------------*/
 
 static cy_rslt_t mqtt_initialize_core_lib( MQTTContext_t *param_mqtt_context,
                                            NetworkContext_t *param_network_context,
@@ -662,7 +715,7 @@ static cy_rslt_t mqtt_initialize_core_lib( MQTTContext_t *param_mqtt_context,
     /* Fill in TransportInterface send and receive function pointers. */
     transport.pNetworkContext = param_network_context;
     transport.send = (TransportSend_t)&cy_awsport_network_send;
-    transport.recv = (TransportRecv_t)&cy_awsport_network_receive;
+    transport.recv = (TransportRecv_t)&mqtt_awsport_network_receive;
 
     /* Fill the values for the network buffer. */
     networkBuffer.pBuffer = networkbuff;
@@ -773,7 +826,7 @@ static void mqtt_receive_thread( cy_thread_arg_t arg )
         connect_status = mqtt_obj->mqtt_session_established;
         if( connect_status )
         {
-            mqtt_status = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_PROCESS_LOOP_TIMEOUT_MS );
+            mqtt_status = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_RECEIVE_DATA_TIMEOUT_MS );
             if( mqtt_status != MQTTSuccess )
             {
                 if( (mqtt_status == MQTTRecvFailed)  || (mqtt_status == MQTTSendFailed) ||
@@ -1185,8 +1238,8 @@ cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connec
             cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "Establishing a TLS session to %.*s:%d.",
                              strlen(mqtt_obj->server_info.host_name), mqtt_obj->server_info.host_name, mqtt_obj->server_info.port );
             result = cy_awsport_network_connect( &(mqtt_obj->network_context),
-                                                 CY_MQTT_SEND_TIMEOUT_MS,
-                                                 CY_MQTT_RECV_TIMEOUT_MS );
+                                                 CY_MQTT_MESSAGE_SEND_TIMEOUT_MS,
+                                                 CY_MQTT_SOCKET_RECEIVE_TIMEOUT_MS );
             if( result != CY_RSLT_SUCCESS )
             {
                 cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nConnection to the broker failed. Retrying connection with backoff and jitter.\n" );
@@ -1365,6 +1418,7 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
     uint8_t          publishIndex = CY_MQTT_MAX_OUTGOING_PUBLISHES;
     cy_mqtt_object_t *mqtt_obj;
     uint8_t          retry = 0;
+    uint32_t         timeout = 0;
 
     if( (mqtt_handle == NULL) || (pubmsg == NULL) )
     {
@@ -1397,7 +1451,15 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
     }
     else
     {
-        mqtt_obj->outgoing_pub_packets[ publishIndex ].pubinfo.qos = (MQTTQoS_t)pubmsg->qos;
+        if( (pubmsg->qos == CY_MQTT_QOS0) || (pubmsg->qos == CY_MQTT_QOS1) || (pubmsg->qos == CY_MQTT_QOS2) )
+        {
+            mqtt_obj->outgoing_pub_packets[ publishIndex ].pubinfo.qos = (MQTTQoS_t)pubmsg->qos;
+        }
+        else
+        {
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nQoS level not supported..!\n" );
+            return CY_RSLT_MODULE_MQTT_PUBLISH_FAIL;
+        }
         mqtt_obj->outgoing_pub_packets[ publishIndex ].pubinfo.pTopicName = pubmsg->topic;
         mqtt_obj->outgoing_pub_packets[ publishIndex ].pubinfo.topicNameLength = pubmsg->topic_len;
         mqtt_obj->outgoing_pub_packets[ publishIndex ].pubinfo.pPayload = pubmsg->payload;
@@ -1414,14 +1476,16 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
         /* Get a new packet ID. */
         mqtt_obj->outgoing_pub_packets[ publishIndex ].packetid = MQTT_GetPacketId( &(mqtt_obj->mqtt_context) );
         mqtt_obj->pub_ack_status.packetid = mqtt_obj->outgoing_pub_packets[ publishIndex ].packetid;
+        /* Publish retry loop. */
         do
         {
-            /* Send the PUBLISH packet. */
             mqtt_obj->pub_ack_status.puback_status = false;
+            timeout = CY_MQTT_ACK_RECEIVE_TIMEOUT_MS;
+
+            /* Send the PUBLISH packet. */
             mqttStatus = MQTT_Publish( &(mqtt_obj->mqtt_context),
                                        &(mqtt_obj->outgoing_pub_packets[ publishIndex ].pubinfo),
                                        mqtt_obj->outgoing_pub_packets[ publishIndex ].packetid );
-
             if( mqttStatus != MQTTSuccess )
             {
                 cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Failed to send PUBLISH packet to broker with error = %s.",
@@ -1434,36 +1498,45 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
                                  pubmsg->topic_len, pubmsg->topic, mqtt_obj->outgoing_pub_packets[ publishIndex ].packetid );
                 /* Process the incoming packet from the broker.
                  * Acknowledgment for PUBLISH ( PUBACK ) will be received here. */
-                mqttStatus = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_PUBACK_PUBREC_TIMEOUT_MS );
-                if( mqttStatus != MQTTSuccess )
+                if( mqtt_obj->outgoing_pub_packets[ publishIndex ].pubinfo.qos != MQTTQoS0 )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.", MQTT_Status_strerror( mqttStatus ) );
-                    result = CY_RSLT_MODULE_MQTT_PUBLISH_FAIL;
-                }
-                else
-                {
-                    if(  mqtt_obj->outgoing_pub_packets[ publishIndex ].pubinfo.qos != MQTTQoS0 )
+                    do
                     {
-                        if( mqtt_obj->pub_ack_status.puback_status == true )
+                        mqttStatus = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_RECEIVE_DATA_TIMEOUT_MS );
+                        if( mqttStatus != MQTTSuccess )
                         {
-                            result = CY_RSLT_SUCCESS;
+                            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.", MQTT_Status_strerror( mqttStatus ) );
+                            result = CY_RSLT_MODULE_MQTT_PUBLISH_FAIL;
+                            break;
                         }
                         else
                         {
-                            result = CY_RSLT_MODULE_MQTT_PUBLISH_FAIL;
-                            /* Assign the MQTT Status to an error in case of PUBACK/PUBREC receive failure to retry publish. */
-                            mqttStatus = MQTTRecvFailed;
+                            if( mqtt_obj->pub_ack_status.puback_status == true )
+                            {
+                                result = CY_RSLT_SUCCESS;
+                                break;
+                            }
                         }
-                    }
-                    else
+
+                        timeout = timeout - CY_MQTT_SOCKET_RECEIVE_TIMEOUT_MS;
+
+                    } while( timeout > 0 );
+
+                    /* Assign the MQTT Status to an error in case of PUBACK/PUBREC receive failure to retry publish. */
+                    if( mqtt_obj->pub_ack_status.puback_status == false )
                     {
-                        result = CY_RSLT_SUCCESS;
+                        result = CY_RSLT_MODULE_MQTT_PUBLISH_FAIL;
+                        mqttStatus = MQTTRecvFailed;
                     }
+                }
+                else
+                {
+                    result = CY_RSLT_SUCCESS;
                 }
                 mqtt_obj->outgoing_pub_packets[ publishIndex ].pubinfo.dup = true;
             }
             retry++;
-        } while( (mqttStatus != MQTTSuccess) && (retry <= CY_MQTT_PUB_MAX_RETRY) );
+        } while( (mqttStatus != MQTTSuccess) && (retry < CY_MQTT_MAX_RETRY_VALUE) );
 
         if( result != CY_RSLT_SUCCESS )
         {
@@ -1498,10 +1571,11 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
     cy_rslt_t              result = CY_RSLT_SUCCESS;
     MQTTStatus_t           mqttStatus;
     cy_mqtt_object_t       *mqtt_obj;
-    uint8_t                index = 0;
+    uint8_t                index = 0, retry = 0;
     MQTTSubscribeInfo_t    *sub_list = NULL;
+    uint32_t               timeout = 0;
 
-    if( (mqtt_handle == NULL) || (sub_info == NULL) || (sub_count < 1) )
+    if( (mqtt_handle == NULL) || (sub_info == NULL) || (sub_count < 1) || (sub_count > CY_MQTT_MAX_OUTGOING_SUBSCRIBES) )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_subscribe()..!\n" );
         return CY_RSLT_MODULE_MQTT_BADARG;
@@ -1544,10 +1618,17 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
         {
             sub_list[ index ].qos = MQTTQoS1;
         }
-        else
+        else if( sub_info[index].qos == CY_MQTT_QOS2 )
         {
             sub_list[ index ].qos = MQTTQoS2;
         }
+        else
+        {
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nQoS not supported..!\n" );
+            free( sub_list );
+            return CY_RSLT_MODULE_MQTT_SUBSCRIBE_FAIL;
+        }
+        sub_info[ index ].allocated_qos = CY_MQTT_QOS_INVALID;
         sub_list[ index ].pTopicFilter = sub_info[index].topic;
         sub_list[ index ].topicFilterLength = sub_info[index].topic_len;
     }
@@ -1562,48 +1643,103 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
 
     /* Generate the packet identifier for the SUBSCRIBE packet. */
     mqtt_obj->sent_packet_id = MQTT_GetPacketId( &(mqtt_obj->mqtt_context) );
-
     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_subscribe - Acquired Mutex %p ", mqtt_obj->process_mutex );
 
-    /* Send the SUBSCRIBE packet. */
-    mqttStatus = MQTT_Subscribe( &(mqtt_obj->mqtt_context),
-                                 sub_list,
-                                 sub_count,
-                                 mqtt_obj->sent_packet_id );
-
-    if( mqttStatus != MQTTSuccess )
+    do
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nFailed to send SUBSCRIBE packet to broker with error = %s.",
-                         MQTT_Status_strerror( mqttStatus ) );
+        timeout = CY_MQTT_ACK_RECEIVE_TIMEOUT_MS;
         result = CY_RSLT_MODULE_MQTT_SUBSCRIBE_FAIL;
-        goto exit;
-    }
-    else
-    {
-        for( index = 0; index < sub_count; index++ )
-        {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nSUBSCRIBE sent for topic %.*s to broker.\n",
-                             sub_list[ index ].topicFilterLength,
-                             sub_list[ index ].pTopicFilter );
-        }
+        memset( &mqtt_obj->sub_ack_status, 0x00, sizeof(mqtt_obj->sub_ack_status) );
 
-        /* Process the incoming packet from the broker.
-         * Acknowledgment for subscription ( SUBACK ) will be received here. */
-        mqttStatus = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_PROCESS_LOOP_TIMEOUT_MS );
+        /*
+         * num_of_subs_in_req is initialized with number of subscribe messages in one MQTT subscribe request.
+         * Once after receiving the subscription acknowledgment this variable is set to zero.
+         * So num_of_subs_in_req == 0 refers that there is no outstanding subscription messages waiting for acknowledgment. */
+        mqtt_obj->num_of_subs_in_req = sub_count;
+
+        /* Send the SUBSCRIBE packet. */
+        mqttStatus = MQTT_Subscribe( &(mqtt_obj->mqtt_context),
+                                     sub_list,
+                                     sub_count,
+                                     mqtt_obj->sent_packet_id );
         if( mqttStatus != MQTTSuccess )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.", MQTT_Status_strerror( mqttStatus ) );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nFailed to send SUBSCRIBE packet to broker with error = %s.",
+                             MQTT_Status_strerror( mqttStatus ) );
             result = CY_RSLT_MODULE_MQTT_SUBSCRIBE_FAIL;
-            goto exit;
         }
-
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\n sub_ack_status: [0x%X] ", (unsigned int)mqtt_obj->sub_ack_status );
-        if( mqtt_obj->sub_ack_status == MQTTSubAckFailure )
+        else
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nSubscription ack status is MQTTSubAckFailure..!\n" );
-            result = CY_RSLT_MODULE_MQTT_SUBSCRIBE_FAIL;
-            goto exit;
+            for( index = 0; index < sub_count; index++ )
+            {
+                mqtt_obj->sub_ack_status[index] = MQTTSubAckFailure;
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nSUBSCRIBE sent for topic %.*s to broker.\n",
+                                 sub_list[ index ].topicFilterLength,
+                                 sub_list[ index ].pTopicFilter );
+            }
+            do
+            {
+                /* Process the incoming packet from the broker.
+                 * Acknowledgment for subscription ( SUBACK ) will be received here. */
+                mqttStatus = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_RECEIVE_DATA_TIMEOUT_MS );
+                if( mqttStatus != MQTTSuccess )
+                {
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.", MQTT_Status_strerror( mqttStatus ) );
+                    result = CY_RSLT_MODULE_MQTT_SUBSCRIBE_FAIL;
+                    break;
+                }
+
+                /* if suback status is updated then num_of_subs_in_req will be set to 0 in mqtt_event_callback.*/
+                if( mqtt_obj->num_of_subs_in_req == 0 )
+                {
+                    result = CY_RSLT_MODULE_MQTT_SUBSCRIBE_FAIL; /* Initialize result with failure. */
+                    for( index = 0; index < sub_count; index++ )
+                    {
+                        if( mqtt_obj->sub_ack_status[index] == MQTTSubAckFailure )
+                        {
+                            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nMQTT broker rejected SUBSCRIBE request for topic %.*s .\n",
+                                             sub_list[ index ].topicFilterLength,
+                                             sub_list[ index ].pTopicFilter );
+                            sub_info[ index ].allocated_qos = CY_MQTT_QOS_INVALID;
+                        }
+                        else
+                        {
+                            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nSUBSCRIBE accepted for topic %.*s with QoS %d .\n",
+                                             sub_list[ index ].topicFilterLength,
+                                             sub_list[ index ].pTopicFilter, mqtt_obj->sub_ack_status[index] );
+                            if( mqtt_obj->sub_ack_status[index] == MQTTSubAckSuccessQos0 )
+                            {
+                                sub_info[ index ].allocated_qos = CY_MQTT_QOS0;
+                            }
+                            else if( mqtt_obj->sub_ack_status[index] == MQTTSubAckSuccessQos1 )
+                            {
+                                sub_info[ index ].allocated_qos = CY_MQTT_QOS1;
+                            }
+                            else
+                            {
+                                sub_info[ index ].allocated_qos = CY_MQTT_QOS2;
+                            }
+                            result = CY_RSLT_SUCCESS; /* Update with success if at least one subscription is successful. */
+                        }
+                    }
+                    break; /* Received the ack. So exit timeout do loop */
+                }
+                timeout = timeout - CY_MQTT_SOCKET_RECEIVE_TIMEOUT_MS;
+            } while( timeout > 0 );
+
+            if( mqtt_obj->num_of_subs_in_req != 0 )
+            {
+                result = CY_RSLT_MODULE_MQTT_SUBSCRIBE_FAIL;
+                mqttStatus = MQTTRecvFailed; /* Assign error value to retry subscribe. */
+            }
         }
+        retry++;
+    } while( (mqttStatus != MQTTSuccess) && (retry < CY_MQTT_MAX_RETRY_VALUE) );
+
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nSubscription ack status is MQTTSubAckFailure..!\n" );
+        goto exit;
     }
 
     result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
@@ -1636,8 +1772,9 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
     cy_rslt_t              result = CY_RSLT_SUCCESS;
     cy_mqtt_object_t       *mqtt_obj;
     MQTTStatus_t           mqttStatus;
-    uint8_t                index = 0;
+    uint8_t                index = 0, retry = 0;
     MQTTSubscribeInfo_t    *unsub_list = NULL;
+    uint32_t               timeout = 0;
 
     if( (mqtt_handle == NULL) || (unsub_info == NULL) || (unsub_count < 1) )
     {
@@ -1682,9 +1819,15 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
         {
             unsub_list[ index ].qos = MQTTQoS1;
         }
-        else
+        else if( unsub_info[index].qos == CY_MQTT_QOS2 )
         {
             unsub_list[ index ].qos = MQTTQoS2;
+        }
+        else
+        {
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nQoS level not supported...\n" );
+            free( unsub_list );
+            return CY_RSLT_MODULE_MQTT_UNSUBSCRIBE_FAIL;
         }
         unsub_list[ index ].pTopicFilter = unsub_info[index].topic;
         unsub_list[ index ].topicFilterLength = unsub_info[index].topic_len;
@@ -1694,6 +1837,7 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
     if( result != CY_RSLT_SUCCESS )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        free( unsub_list );
         return result;
     }
     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_unsubscribe - Acquired Mutex %p ", mqtt_obj->process_mutex );
@@ -1701,29 +1845,57 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
     /* Generate the packet identifier for the UNSUBSCRIBE packet. */
     mqtt_obj->sent_packet_id = MQTT_GetPacketId( &(mqtt_obj->mqtt_context) );
 
-    /* Send the UNSUBSCRIBE packet. */
-    mqttStatus = MQTT_Unsubscribe( &(mqtt_obj->mqtt_context),
-                                   unsub_list,
-                                   unsub_count,
-                                   mqtt_obj->sent_packet_id );
-    if( mqttStatus != MQTTSuccess )
+    do
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Failed to send UNSUBSCRIBE packet to broker with error = %s.",
-                    MQTT_Status_strerror( mqttStatus ) );
-        result = CY_RSLT_MODULE_MQTT_UNSUBSCRIBE_FAIL;
-        goto exit;
-    }
-    else
-    {
+        timeout = CY_MQTT_ACK_RECEIVE_TIMEOUT_MS;
+        mqtt_obj->unsub_ack_received = false;
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "UNSUBSCRIBE sent for topic %.*s to broker.\n\n", unsub_info->topic_len, unsub_info->topic );
-        /* Process the  incoming packet from the broker.
-         * Acknowledgment for UNSUBSCRIBE ( UNSUBACK ) will be received here. */
-        mqttStatus = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_PROCESS_LOOP_TIMEOUT_MS );
+        /* Send the UNSUBSCRIBE packet. */
+        mqttStatus = MQTT_Unsubscribe( &(mqtt_obj->mqtt_context),
+                                       unsub_list,
+                                       unsub_count,
+                                       mqtt_obj->sent_packet_id );
         if( mqttStatus != MQTTSuccess )
         {
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Failed to send UNSUBSCRIBE packet to broker with error = %s.",
+                        MQTT_Status_strerror( mqttStatus ) );
             result = CY_RSLT_MODULE_MQTT_UNSUBSCRIBE_FAIL;
-            goto exit;
         }
+        else
+        {
+            do
+            {
+                /* Process the  incoming packet from the broker.
+                 * Acknowledgment for UNSUBSCRIBE ( UNSUBACK ) will be received here. */
+                mqttStatus = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_RECEIVE_DATA_TIMEOUT_MS );
+                if( mqttStatus != MQTTSuccess )
+                {
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.", MQTT_Status_strerror( mqttStatus ) );
+                    result = CY_RSLT_MODULE_MQTT_UNSUBSCRIBE_FAIL;
+                    break;
+                }
+                if( mqtt_obj->unsub_ack_received == true )
+                {
+                    result = CY_RSLT_SUCCESS;
+                    break;
+                }
+                timeout = timeout - CY_MQTT_SOCKET_RECEIVE_TIMEOUT_MS;
+            } while( timeout > 0 );
+
+            if( mqtt_obj->unsub_ack_received == false )
+            {
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nNot received unsuback before timeout %u millisecond ", (unsigned int)CY_MQTT_ACK_RECEIVE_TIMEOUT_MS );
+                result = CY_RSLT_MODULE_MQTT_UNSUBSCRIBE_FAIL;
+                mqttStatus = MQTTRecvFailed; /* Assign error value to retry subscribe. */
+            }
+        }
+        retry++;
+    } while( (mqttStatus != MQTTSuccess) && (retry < CY_MQTT_MAX_RETRY_VALUE) );
+
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nSubscription ack status is MQTTSubAckFailure..!\n" );
+        goto exit;
     }
 
     result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
