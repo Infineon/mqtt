@@ -869,7 +869,7 @@ cy_rslt_t cy_mqtt_init( void )
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
 
-    if( (mqtt_lib_init_status == true) )
+    if( mqtt_lib_init_status == true )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nMQTT library is already initialized. Number of MQTT client instance : [%d] \n", mqtt_handle_count );
         return result;
@@ -1575,7 +1575,7 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
     MQTTSubscribeInfo_t    *sub_list = NULL;
     uint32_t               timeout = 0;
 
-    if( (mqtt_handle == NULL) || (sub_info == NULL) || (sub_count < 1) || (sub_count > CY_MQTT_MAX_OUTGOING_SUBSCRIBES) )
+    if( (mqtt_handle == NULL) || (sub_info == NULL) || (sub_count < 1) )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_subscribe()..!\n" );
         return CY_RSLT_MODULE_MQTT_BADARG;
