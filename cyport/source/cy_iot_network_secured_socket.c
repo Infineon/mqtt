@@ -1,10 +1,10 @@
 /*
- * Copyright 2020, Cypress Semiconductor Corporation or a subsidiary of
- * Cypress Semiconductor Corporation. All Rights Reserved.
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company) or
+ * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
- * materials ("Software"), is owned by Cypress Semiconductor Corporation
- * or one of its subsidiaries ("Cypress") and is protected by and subject to
+ * materials ("Software") is owned by Cypress Semiconductor Corporation
+ * or one of its affiliates ("Cypress") and is protected by and subject to
  * worldwide patent protection (United States and foreign),
  * United States copyright laws and international treaty provisions.
  * Therefore, you may use this Software only as provided in the license
@@ -13,7 +13,7 @@
  * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
  * non-transferable license to copy, modify, and compile the Software
  * source code solely for use in connection with Cypress's
- * integrated circuit products. Any reproduction, modification, translation,
+ * integrated circuit products.  Any reproduction, modification, translation,
  * compilation, or representation of this Software except as specified
  * above is prohibited without the express written permission of Cypress.
  *
@@ -74,6 +74,8 @@
 #include "iot_threads.h"
 /* Atomic include. */
 #include "iot_atomic.h"
+/* RTOS abstraction include. */
+#include "cyabs_rtos.h"
 
 /* Configure logs for the functions in this file. */
 #ifdef IOT_LOG_LEVEL_NETWORK
@@ -111,30 +113,16 @@
     #define IotNetwork_Free    free
 #endif
 
-/**
- * @brief The timeout for the Cypress secure socket poll call in the receive thread.
- *
- * After the timeout expires, the receive thread will check will queries the
- * connection flags to ensure that the connection is still open. Therefore,
- * this flag represents the maximum time it takes for the receive thread to
- * detect a closed connection.
- *
- * This timeout is also used to wait for all receive threads to exit during
- * global cleanup.
- *
- * Since this value only affects the shutdown sequence, it generally does not
- * need to be changed.
- */
-#ifndef IOT_NETWORK_CY_SOCKETS_POLL_TIMEOUT_MS
-    #define IOT_NETWORK_CY_SOCKETS_POLL_TIMEOUT_MS      ( 100UL )
+#define IOT_NETWORK_CY_SOCKETS_READ_DEALY_IN_MSEC        ( 50UL )
+#define CY_MQTT_SOCKET_EVENT_QUEUE_SIZE                  ( 10UL )
+#define CY_MQTT_SOCKET_EVENT_QUEUE_TIMEOUT_IN_MSEC       ( 500UL )
+#define CY_MQTT_SOCKET_EVENT_THREAD_PRIORITY             ( CY_RTOS_PRIORITY_NORMAL )
+#if (IOT_LOG_LEVEL_NETWORK == IOT_LOG_NONE)
+    #define CY_MQTT_SOCKET_EVENT_THREAD_STACK_SIZE       ( 1024 * 2 )
+#else
+    #define CY_MQTT_SOCKET_EVENT_THREAD_STACK_SIZE       ( (1024 * 2) + (1024 * 3) ) /* Additional 3kb of stack is added for enabling the prints */
 #endif
-
-/* Flags to track connection state. */
-#define FLAG_HAS_RECEIVE_CALLBACK                       ( 0x00000002UL ) /**< @brief Connection has receive callback. */
-#define FLAG_CONNECTION_DESTROYED                       ( 0x00000004UL ) /**< @brief Connection has been destroyed. */
-
-#define IOT_NETWORK_CY_SOCKETS_POLL_DELAY_IN_MSEC       ( 100UL )
-#define IOT_NETWORK_CY_SOCKETS_READ_DEALY_IN_MSEC       ( 50UL )
+#define UNUSED_ARG(arg)                                  (void)(arg)
 
 /**
  * @brief Represents a network connection.
@@ -151,15 +139,9 @@ typedef struct _networkConnection
     IotNetworkCloseCallback_t closeCallback;     /**< @brief Network close callback, if any. */
     void * pCloseContext;                        /**< @brief The context for the close callback. */
     IotMutex_t callbackMutex;                    /**< @brief Synchronizes the receive callback with calls to destroy. */
-    IotSemaphore_t destroyNotification;          /**< @brief Notifies the receive callback that the connection was destroyed. */
 } _networkConnection_t;
 
 /*-----------------------------------------------------------*/
-
-/**
- * @brief Tracks the number of active receive threads.
- */
-static uint32_t _receiveThreadCount = 0;
 
 /**
  * @brief An #IotNetworkInterface_t that uses the functions in this file.
@@ -174,8 +156,28 @@ static const IotNetworkInterface_t _networkCYSecuredSocket =
     .destroy            = IotNetworkSecureSockets_Destroy
 };
 
-/*-----------------------------------------------------------*/
+/**
+ * MQTT event types.
+ */
+typedef enum cy_mqtt_socket_event_type
+{
+    CY_MQTT_SOCKET_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECIEVE = 0, /**< Incoming subscribed message */
+    CY_MQTT_SOCKET_EVENT_TYPE_DISCONNECT                   = 1  /**< Disconnected from MQTT broker. */
+} cy_mqtt_socket_event_type_t;
 
+/**
+ * MQTT event information structure.
+ */
+typedef struct cy_mqtt_event
+{
+    cy_mqtt_socket_event_type_t    type;             /**< Event type */
+    IotNetworkConnection_t  pConnection;             /**< Connection handle */
+} cy_mqtt_event_t;
+
+static cy_thread_t   mqtt_socket_event_thread = NULL;
+static cy_queue_t    mqtt_socket_event_queue = NULL;
+
+/*-----------------------------------------------------------*/
 /**
  * @brief Destroy a network connection.
  *
@@ -196,126 +198,121 @@ static void _destroyConnection( _networkConnection_t * pConnection )
     IotMutex_Destroy( &( pConnection->contextMutex ) );
     IotMutex_Destroy( &( pConnection->callbackMutex ) );
 
-    if( ( pConnection->flags & FLAG_HAS_RECEIVE_CALLBACK ) == FLAG_HAS_RECEIVE_CALLBACK )
-    {
-        IotSemaphore_Destroy( &( pConnection->destroyNotification ) );
-    }
-
     /* Free memory. */
     IotNetwork_Free( pConnection );
 }
 
 /*-----------------------------------------------------------*/
-/**
- * @brief Network receive thread.
- *
- * This thread polls the network socket and reads data when data is available.
- * It then invokes the receive callback, if any.
- *
- * @param[in] pArgument The connection associated with this receive thread.
- */
-
-static void _receiveThread( void * pArgument )
-{
-    cy_rslt_t res = CY_RSLT_SUCCESS;
-    uint32_t flags = CY_SOCKET_POLL_READ;
-
-    /* Cast function parameter to correct type. */
-    _networkConnection_t * pConnection = pArgument;
-
-    /* Continuously poll the network connection for events. */
-    while( true )
-    {
-        flags = CY_SOCKET_POLL_READ;
-        res = cy_socket_poll( pConnection->handle, &flags, IOT_NETWORK_CY_SOCKETS_POLL_TIMEOUT_MS );
-        if( res != CY_RSLT_SUCCESS )
-        {
-            break;
-        }
-        else
-        {
-            /* Invoke receive callback if data is available. */
-            if( flags & CY_SOCKET_POLL_READ )
-            {
-                IotMutex_Lock( &( pConnection->callbackMutex ) );
-
-                /* Only run the receive callback if the connection has not been
-                 * destroyed. */
-                if( ( pConnection->flags & FLAG_CONNECTION_DESTROYED ) == 0 )
-                {
-                    pConnection->receiveCallback( pConnection,
-                                                  pConnection->pReceiveContext );
-                }
-
-                IotMutex_Unlock( &( pConnection->callbackMutex ) );
-            }
-            else
-            {
-                IotClock_SleepMs( IOT_NETWORK_CY_SOCKETS_POLL_DELAY_IN_MSEC );
-            }
-        }
-    }
-
-    /**
-     * If a close callback has been defined, invoke it now; since we
-     * don't know what caused the close, use "unknown" as the reason.
-     */
-    if( pConnection->closeCallback != NULL )
-    {
-        pConnection->closeCallback( pConnection,
-                                    IOT_NETWORK_UNKNOWN_CLOSED,
-                                    pConnection->pCloseContext );
-    }
-
-    /* Wait for the call to network destroy, then destroy the connection. */
-    IotSemaphore_Wait( &( pConnection->destroyNotification ) );
-    IotLogDebug( "(Network connection %p) Receive thread terminating.", pConnection );
-    _destroyConnection( pConnection );
-
-    ( void ) Atomic_Decrement_u32( &_receiveThreadCount );
-
-}
-
-/*-----------------------------------------------------------*/
-
 const IotNetworkInterface_t * IotNetworkSecureSockets_GetInterface( void )
 {
     return &_networkCYSecuredSocket;
 }
 
-/*-----------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------*/
+static void mqtt_socket_event_task( cy_thread_arg_t arg )
+{
+    cy_rslt_t         result = CY_RSLT_SUCCESS;
+    cy_mqtt_event_t   event;
+    IotNetworkConnection_t pConnection = NULL;
+    UNUSED_ARG( arg );
 
+    IotLogInfo( "\nStarting mqtt_socket_event_thread...\n" );
+
+    while( true )
+    {
+        memset( &event, 0x00, sizeof(cy_mqtt_event_t) );
+        result = cy_rtos_get_queue( &mqtt_socket_event_queue, (void *)&event, CY_RTOS_NEVER_TIMEOUT, false );
+        if( CY_RSLT_SUCCESS != result )
+        {
+            IotLogError( "\ncy_rtos_get_queue for mqtt_socket_event_queue failed with Error : [0x%X] ", (unsigned int)result );
+            continue;
+        }
+        switch( event.type )
+        {
+            case CY_MQTT_SOCKET_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECIEVE:
+                pConnection = (IotNetworkConnection_t)event.pConnection;
+                IotMutex_Lock( &( pConnection->callbackMutex ) );
+                if ( pConnection->receiveCallback != NULL )
+                {
+                    pConnection->receiveCallback( pConnection, pConnection->pReceiveContext );
+                }
+                IotMutex_Unlock( &( pConnection->callbackMutex ) );
+                break;
+
+            case CY_MQTT_SOCKET_EVENT_TYPE_DISCONNECT:
+                pConnection = (IotNetworkConnection_t)event.pConnection;
+                /**
+                 * If a close callback has been defined, invoke it now; since we
+                 * don't know what caused the close, use "unknown" as the reason.
+                 */
+                IotMutex_Lock( &( pConnection->callbackMutex ) );
+                if( pConnection->closeCallback != NULL )
+                {
+                    pConnection->closeCallback( pConnection,
+                                                IOT_NETWORK_UNKNOWN_CLOSED,
+                                                pConnection->pCloseContext );
+                }
+                IotMutex_Unlock( &( pConnection->callbackMutex ) );
+                break;
+
+                /* Unknown event type. */
+            default:
+                IotLogError( "Unknown event type." );
+                break;
+        }
+    }
+}
+
+/*-----------------------------------------------------------*/
 IotNetworkError_t IotNetworkSecureSockets_Init( void )
 {
     IotNetworkError_t status = IOT_NETWORK_SUCCESS;
-    /* Clear the counter of receive threads. */
-    _receiveThreadCount = 0;
+    cy_rslt_t res = CY_RSLT_SUCCESS;
 
-    cy_rslt_t res = cy_socket_init();
+    /*
+     * Initialize the queue for network socket events.
+     */
+    res = cy_rtos_init_queue( &mqtt_socket_event_queue, CY_MQTT_SOCKET_EVENT_QUEUE_SIZE, sizeof(cy_mqtt_event_t) );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        IotLogError( "\ncy_rtos_init_queue failed with Error : [0x%X] ", (unsigned int)res );
+        return IOT_NETWORK_FAILURE;
+    }
+
+    res = cy_socket_init();
     if( res != CY_RSLT_SUCCESS )
     {
         IotLogError( "Network library initialization failed." );
-        status = IOT_NETWORK_FAILURE;
+        (void)cy_rtos_deinit_queue( &mqtt_socket_event_queue );
+        mqtt_socket_event_queue = NULL;
+        return IOT_NETWORK_FAILURE;
     }
     else
     {
         IotLogInfo( "Network library initialized." );
     }
 
+    res = cy_rtos_create_thread( &mqtt_socket_event_thread, mqtt_socket_event_task, "MQTTEventThread", NULL,
+                                 CY_MQTT_SOCKET_EVENT_THREAD_STACK_SIZE, CY_MQTT_SOCKET_EVENT_THREAD_PRIORITY, NULL );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        IotLogError( "cy_rtos_create_thread failed with Error : [0x%X] ", (unsigned int)res );
+        (void)cy_socket_deinit();
+        (void)cy_rtos_deinit_queue( &mqtt_socket_event_queue );
+        mqtt_socket_event_queue = NULL;
+        return IOT_NETWORK_FAILURE;
+    }
+
     return status;
 }
 
 /*-----------------------------------------------------------*/
-
+// TODO : API needs to return error type instead of void to the caller.
 void IotNetworkSecureSockets_Cleanup( void )
 {
-    /* Atomically read the receive thread count by adding 0 to it. Sleep and
-     * wait for all receive threads to exit. */
-    while( Atomic_Add_u32( &_receiveThreadCount, 0 ) > 0 )
-    {
-        IotClock_SleepMs( IOT_NETWORK_CY_SOCKETS_POLL_TIMEOUT_MS );
-    }
-    cy_rslt_t res = cy_socket_deinit();
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+
+    res = cy_socket_deinit();
     if( res != CY_RSLT_SUCCESS )
     {
         IotLogError( "Network library cleanup failed." );
@@ -324,25 +321,63 @@ void IotNetworkSecureSockets_Cleanup( void )
     {
         IotLogInfo( "Network library cleanup done" );
     }
+
+    if( mqtt_socket_event_thread != NULL )
+    {
+        IotLogInfo( "Terminating MQTT event thread %p..!\n", mqtt_socket_event_thread );
+        res = cy_rtos_terminate_thread( &mqtt_socket_event_thread  );
+        if( res != CY_RSLT_SUCCESS )
+        {
+            IotLogError( "Terminate MQTT event thread failed with Error : [0x%X] ", (unsigned int)res );
+            return;
+        }
+
+        IotLogInfo( "Joining MQTT event thread %p..!\n", mqtt_socket_event_thread );
+        res = cy_rtos_join_thread( &mqtt_socket_event_thread );
+        if( res != CY_RSLT_SUCCESS )
+        {
+            IotLogError( "Join MQTT event thread failed with Error : [0x%X] ", (unsigned int)res );
+            return;
+        }
+        mqtt_socket_event_thread = NULL;
+    }
+
+    if( mqtt_socket_event_queue != NULL )
+    {
+        IotLogInfo( "Deinitializing mqtt_socket_event_queue %p..!\n", mqtt_socket_event_queue );
+        res = cy_rtos_deinit_queue( &mqtt_socket_event_queue );
+        if( res != CY_RSLT_SUCCESS )
+        {
+            IotLogError( "cy_rtos_deinit_queue failed with Error : [0x%X] ", (unsigned int)res );
+            return;
+        }
+        else
+        {
+            IotLogDebug( "cy_rtos_deinit_queue successful." );
+        }
+        mqtt_socket_event_queue = NULL;
+    }
 }
 
 /*-----------------------------------------------------------*/
-
 IotNetworkError_t IotNetworkSecureSockets_Create( IotNetworkServerInfo_t pServerInfo,
                                                   IotNetworkCredentials_t pCredentialInfo,
                                                   IotNetworkConnection_t * pConnection )
 {
     IotNetworkError_t status = IOT_NETWORK_SUCCESS;
-    _networkConnection_t * pNewNetworkConnection = NULL;
+    _networkConnection_t *pNewNetworkConnection = NULL;
+    cy_socket_tls_auth_mode_t authmode = CY_SOCKET_TLS_VERIFY_NONE;
 
     /* Flags to track initialization. */
     bool socketContextCreated = false;
     bool networkMutexCreated = false;
     bool callbackMutexCreated = false;
+    bool rootca_loaded = false;
 
-    cy_rslt_t res ;
+    cy_rslt_t res = CY_RSLT_SUCCESS;
     cy_socket_ip_address_t ip_addr;
-    char *ptr ;
+    char *ptr = NULL;
+    UNUSED_ARG( ptr );
 
     /* Allocate memory for a new connection. */
     pNewNetworkConnection = IotNetwork_Malloc( sizeof( _networkConnection_t ) );
@@ -361,7 +396,8 @@ IotNetworkError_t IotNetworkSecureSockets_Create( IotNetworkServerInfo_t pServer
     if( networkMutexCreated == false )
     {
         IotLogError( "Failed to create mutex for network context." );
-        return IOT_NETWORK_FAILURE;
+        status = IOT_NETWORK_FAILURE;
+        goto exit;
     }
 
     /* Initialize the mutex for the receive callback. */
@@ -370,11 +406,8 @@ IotNetworkError_t IotNetworkSecureSockets_Create( IotNetworkServerInfo_t pServer
     if( callbackMutexCreated == false )
     {
         IotLogError( "Failed to create mutex for receive callback." );
-        if( networkMutexCreated )
-        {
-            IotMutex_Destroy( &( pNewNetworkConnection->contextMutex ) );
-        }
-        return IOT_NETWORK_FAILURE;
+        status = IOT_NETWORK_FAILURE;
+        goto exit;
     }
 
     res = cy_socket_gethostbyname( pServerInfo->pHostName, CY_SOCKET_IP_VER_V4, &ip_addr );
@@ -391,12 +424,17 @@ IotNetworkError_t IotNetworkSecureSockets_Create( IotNetworkServerInfo_t pServer
     /* Check for secured connection. */
     if( pCredentialInfo != NULL )
     {
-        res = cy_tls_load_global_root_ca_certificates( pCredentialInfo->pRootCa, pCredentialInfo->rootCaSize - 1 );
-        if( res != CY_RSLT_SUCCESS)
+        if( (pCredentialInfo->pRootCa != NULL) && (pCredentialInfo->rootCaSize > 0) )
         {
-            IotLogError( "cy_tls_load_global_root_ca_certificates failed %d\n", res );
-            status = IOT_NETWORK_FAILURE;
-            goto exit;
+            res = cy_tls_load_global_root_ca_certificates( pCredentialInfo->pRootCa, pCredentialInfo->rootCaSize - 1 );
+            if( res != CY_RSLT_SUCCESS)
+            {
+                IotLogError( "cy_tls_load_global_root_ca_certificates failed %d\n", res );
+                status = IOT_NETWORK_FAILURE;
+                goto exit;
+            }
+            rootca_loaded = true;
+            authmode = CY_SOCKET_TLS_VERIFY_REQUIRED;
         }
 
 #if defined( CY_MQTT_ENABLE_SECURE_TEST_MOSQUITTO_SUPPORT )
@@ -408,15 +446,19 @@ IotNetworkError_t IotNetworkSecureSockets_Create( IotNetworkServerInfo_t pServer
             goto exit;
         }
 #endif
-
-        res = cy_tls_create_identity( pCredentialInfo->pClientCert, pCredentialInfo->clientCertSize - 1,
-                                      pCredentialInfo->pPrivateKey, pCredentialInfo->privateKeySize - 1,
-                                      &(pNewNetworkConnection->tls_identity) );
-        if( res != CY_RSLT_SUCCESS )
+        pNewNetworkConnection->tls_identity = NULL;
+        if( (pCredentialInfo->pClientCert != NULL) && (pCredentialInfo->clientCertSize > 0) &&
+            (pCredentialInfo->pPrivateKey != NULL) && (pCredentialInfo->privateKeySize > 0) )
         {
-            IotLogError( "cy_tls_create_identity failed\n" );
-            status = IOT_NETWORK_FAILURE;
-            goto exit;
+            res = cy_tls_create_identity( pCredentialInfo->pClientCert, pCredentialInfo->clientCertSize - 1,
+                                          pCredentialInfo->pPrivateKey, pCredentialInfo->privateKeySize - 1,
+                                          &(pNewNetworkConnection->tls_identity) );
+            if( res != CY_RSLT_SUCCESS )
+            {
+                IotLogError( "cy_tls_create_identity failed\n" );
+                status = IOT_NETWORK_FAILURE;
+                goto exit;
+            }
         }
 
         res = cy_socket_create( CY_SOCKET_DOMAIN_AF_INET, CY_SOCKET_TYPE_STREAM,
@@ -427,26 +469,29 @@ IotNetworkError_t IotNetworkSecureSockets_Create( IotNetworkServerInfo_t pServer
             status = IOT_NETWORK_FAILURE;
             goto exit;
         }
-
+        socketContextCreated = true;
         IotLogInfo( "cy_socket_create Success\n" );
 
-        /* FALSE-POSITIVE:
-         * CID: 217093 Wrong sizeof argument
-         *     The last argument is expected to be the size of the pointer itself which is 4 bytes, hence this is a false positive.
-         */
-        res = cy_socket_setsockopt( pNewNetworkConnection->handle, CY_SOCKET_SOL_TLS,
-                                    CY_SOCKET_SO_TLS_IDENTITY, pNewNetworkConnection->tls_identity,
-                                    (uint32_t) sizeof( pNewNetworkConnection->tls_identity ) );
-        if( res != CY_RSLT_SUCCESS)
+        if( pNewNetworkConnection->tls_identity != NULL )
         {
-            IotLogError( "cy_socket_setsockopt failed\n" );
-            status = IOT_NETWORK_FAILURE;
-            goto exit;
+            /* FALSE-POSITIVE:
+             * CID: 217093 Wrong sizeof argument
+             *     The last argument is expected to be the size of the pointer itself which is 4 bytes, hence this is a false positive.
+             */
+            res = cy_socket_setsockopt( pNewNetworkConnection->handle, CY_SOCKET_SOL_TLS,
+                                        CY_SOCKET_SO_TLS_IDENTITY, pNewNetworkConnection->tls_identity,
+                                        (uint32_t) sizeof( pNewNetworkConnection->tls_identity ) );
+            if( res != CY_RSLT_SUCCESS)
+            {
+                IotLogError( "cy_socket_setsockopt failed\n" );
+                status = IOT_NETWORK_FAILURE;
+                goto exit;
+            }
         }
 
         res = cy_socket_setsockopt( pNewNetworkConnection->handle, CY_SOCKET_SOL_TLS,
-                                    CY_SOCKET_SO_TLS_AUTH_MODE, (const void *) CY_SOCKET_TLS_VERIFY_REQUIRED,
-                                    (uint32_t) sizeof( CY_SOCKET_TLS_VERIFY_REQUIRED ) );
+                                    CY_SOCKET_SO_TLS_AUTH_MODE, (const void *) authmode,
+                                    (uint32_t) sizeof( authmode ) );
         if( res != CY_RSLT_SUCCESS)
         {
             IotLogError( "cy_socket_setsockopt failed\n" );
@@ -464,10 +509,9 @@ IotNetworkError_t IotNetworkSecureSockets_Create( IotNetworkServerInfo_t pServer
             status = IOT_NETWORK_FAILURE;
             goto exit;
         }
-
+        socketContextCreated = true;
         IotLogInfo( "cy_socket_create Success\n" );
     }
-    socketContextCreated = true;
 
     pNewNetworkConnection->address.ip_address.ip.v4 = ip_addr.ip.v4;
     pNewNetworkConnection->address.ip_address.version = CY_SOCKET_IP_VER_V4;
@@ -497,14 +541,26 @@ exit:
             IotMutex_Destroy( &( pNewNetworkConnection->callbackMutex ) );
         }
 
+        if( rootca_loaded == true )
+        {
+            (void)cy_tls_release_global_root_ca_certificates();
+        }
+
+        if( pNewNetworkConnection->tls_identity != NULL )
+        {
+            (void)cy_tls_delete_identity( pNewNetworkConnection->tls_identity );
+            pNewNetworkConnection->tls_identity = NULL;
+        }
+
         if( socketContextCreated == true )
         {
-            cy_socket_delete( pNewNetworkConnection->handle );
+            (void)cy_socket_delete( pNewNetworkConnection->handle );
         }
 
         if( pNewNetworkConnection != NULL )
         {
             IotNetwork_Free( pNewNetworkConnection );
+            pNewNetworkConnection = NULL;
         }
     }
     else
@@ -518,111 +574,136 @@ exit:
 
     return status;
 }
-/*-----------------------------------------------------------*/
 
+/*-----------------------------------------------------------*/
+static cy_rslt_t close_callback( cy_socket_t socket_handle, void *arg )
+{
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+    cy_mqtt_event_t event;
+    IotNetworkConnection_t pConnection = NULL;
+
+    if( arg == NULL )
+    {
+        IotLogError( "\nInvalid handle to connection close callback, so nothing to do..!\n" );
+        return res;
+    }
+
+    memset( &event, 0x00, sizeof(cy_mqtt_event_t) );
+    pConnection = (IotNetworkConnection_t)arg;
+    event.type = CY_MQTT_SOCKET_EVENT_TYPE_DISCONNECT;
+    event.pConnection = pConnection;
+    res = cy_rtos_put_queue( &mqtt_socket_event_queue, (void *)&event, CY_MQTT_SOCKET_EVENT_QUEUE_TIMEOUT_IN_MSEC, false );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        IotLogError( "\nPushing to MQTT socket event queue failed with Error : [0x%X] ", (unsigned int)res );
+        return res;
+    }
+    return res;
+}
+
+/*-----------------------------------------------------------*/
+static cy_rslt_t receive_callback( cy_socket_t socket_handle, void *arg )
+{
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+    cy_mqtt_event_t event;
+    IotNetworkConnection_t pConnection = NULL;
+
+    if( arg == NULL )
+    {
+        IotLogError( "\nInvalid handle to data receive callback, so nothing to do..!\n" );
+        return res;
+    }
+
+    memset( &event, 0x00, sizeof(cy_mqtt_event_t) );
+    pConnection = (IotNetworkConnection_t)arg;
+    event.type = CY_MQTT_SOCKET_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECIEVE;
+    event.pConnection = pConnection;
+    res = cy_rtos_put_queue( &mqtt_socket_event_queue, (void *)&event, CY_MQTT_SOCKET_EVENT_QUEUE_TIMEOUT_IN_MSEC, false );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        IotLogError( "\nPushing to MQTT socket event queue failed with Error : [0x%X] ", (unsigned int)res );
+        return res;
+    }
+    return res;
+}
+
+/*-----------------------------------------------------------*/
 IotNetworkError_t IotNetworkSecureSockets_SetReceiveCallback( IotNetworkConnection_t pConnection,
                                                               IotNetworkReceiveCallback_t receiveCallback,
                                                               void * pContext )
 {
     IotNetworkError_t status = IOT_NETWORK_SUCCESS;
+    cy_rslt_t result = CY_RSLT_SUCCESS;
+    cy_socket_opt_callback_t *socket_callback_ptr = NULL;
+    cy_socket_opt_callback_t socket_callback;
+    uint32_t opt_len = 0;
 
-    /* Flags to track initialization. */
-    bool notifyInitialized = false, countIncremented = false;
-
-    /* Initialize the semaphore that notifies the receive thread of connection
-     * destruction. */
-    notifyInitialized = IotSemaphore_Create( &( pConnection->destroyNotification ), 0, 1 );
-    if( notifyInitialized == false )
+    if( receiveCallback != NULL )
     {
-        IotLogError( "(Network connection %p) Failed to create semaphore for "
-                     "receive thread.", pConnection );
-
-        status = IOT_NETWORK_SYSTEM_ERROR;
-        goto exit;
+        pConnection->receiveCallback = receiveCallback;
+        pConnection->pReceiveContext = pContext;
+        socket_callback.callback = receive_callback;
+        socket_callback.arg = (void *)pConnection;
+        socket_callback_ptr = &socket_callback;
+        opt_len = sizeof( socket_callback );
     }
 
-    /* Set the callback (must be non-NULL) and parameter. */
-    if( receiveCallback == NULL )
+    result = cy_socket_setsockopt( pConnection->handle, CY_SOCKET_SOL_SOCKET,
+                                   CY_SOCKET_SO_RECEIVE_CALLBACK,
+                                   socket_callback_ptr, opt_len );
+    if( result != CY_RSLT_SUCCESS )
     {
-        status = IOT_NETWORK_BAD_PARAMETER;
-        goto exit;
+        IotLogError( "\nSet socket receive notification for socket handle = %p failed with Error : [0x%X]",
+                       pConnection->handle, ( unsigned int )result );
+        status = IOT_NETWORK_FAILURE;
     }
-
-    pConnection->receiveCallback = receiveCallback;
-    pConnection->pReceiveContext = pContext;
-
-    /* Set the receive callback flag and increment the count of receive threads. */
-    pConnection->flags |= FLAG_HAS_RECEIVE_CALLBACK;
-    ( void ) Atomic_Increment_u32( &_receiveThreadCount );
-    countIncremented = true;
-
-    /* Create the thread to receive incoming data. */
-    if( Iot_CreateDetachedThread( _receiveThread,
-                                  pConnection,
-                                  IOT_THREAD_DEFAULT_PRIORITY,
-                                  IOT_THREAD_DEFAULT_STACK_SIZE ) == false )
-    {
-        IotLogError( "(Network connection %p) Failed to create thread for receiving data.",
-                     pConnection );
-        status = IOT_NETWORK_SYSTEM_ERROR;
-    }
-
- exit :
-    /* Clean up on error. */
-    if( status != IOT_NETWORK_SUCCESS )
-    {
-        if( notifyInitialized == true )
-        {
-            IotSemaphore_Destroy( &( pConnection->destroyNotification ) );
-        }
-
-        if( countIncremented == true )
-        {
-            pConnection->flags &= ~FLAG_HAS_RECEIVE_CALLBACK;
-            ( void ) Atomic_Decrement_u32( &_receiveThreadCount );
-        }
-    }
-    else
-    {
-        IotLogDebug( "(Network connection %p) Receive callback set.",
-                     pConnection );
-    }
-
     return status;
 }
 
 /*-----------------------------------------------------------*/
-
 IotNetworkError_t IotNetworkSecureSockets_SetCloseCallback( IotNetworkConnection_t pConnection,
                                                             IotNetworkCloseCallback_t closeCallback,
                                                             void * pContext )
 {
-    IotNetworkError_t status = IOT_NETWORK_BAD_PARAMETER;
+    IotNetworkError_t status = IOT_NETWORK_SUCCESS;
+    cy_rslt_t result = CY_RSLT_SUCCESS;
+    cy_socket_opt_callback_t *socket_callback_ptr = NULL;
+    cy_socket_opt_callback_t socket_callback;
+    uint32_t opt_len = 0;
 
     if( closeCallback != NULL )
     {
         /* Set the callback and parameter. */
         pConnection->closeCallback = closeCallback;
         pConnection->pCloseContext = pContext;
-
-        status = IOT_NETWORK_SUCCESS;
+        socket_callback.callback = close_callback;
+        socket_callback.arg = (void *)pConnection;
+        socket_callback_ptr = &socket_callback;
+        opt_len = sizeof( socket_callback );
     }
 
+    result = cy_socket_setsockopt( pConnection->handle, CY_SOCKET_SOL_SOCKET,
+                                   CY_SOCKET_SO_DISCONNECT_CALLBACK,
+                                   socket_callback_ptr, opt_len );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        IotLogError( "\nSet socket close notification for socket handle = %p failed with Error : [0x%X]",
+                       pConnection->handle, ( unsigned int )result );
+        status = IOT_NETWORK_FAILURE;
+    }
     return status;
 }
 
 /*-----------------------------------------------------------*/
-
 size_t IotNetworkSecureSockets_Send( IotNetworkConnection_t pConnection,
                                      const uint8_t * pMessage,
                                      size_t messageLength )
 {
     size_t bytesSent = 0;
-    cy_rslt_t res ;
+    cy_rslt_t res = CY_RSLT_SUCCESS;
 
     IotLogDebug( "(Network connection %p) Sending %lu bytes.",
-                 pConnection,
-                 ( unsigned long ) messageLength );
+                 pConnection, ( unsigned long ) messageLength );
     IotMutex_Lock( &( pConnection->contextMutex ) );
 
     res = cy_socket_send( pConnection->handle, pMessage, messageLength, 0, (uint32_t *)&bytesSent );
@@ -637,12 +718,11 @@ size_t IotNetworkSecureSockets_Send( IotNetworkConnection_t pConnection,
 }
 
 /*-----------------------------------------------------------*/
-
 size_t IotNetworkSecureSockets_Receive( IotNetworkConnection_t pConnection,
                                         uint8_t * pBuffer,
                                         size_t bytesRequested )
 {
-    cy_rslt_t res = 0 ;
+    cy_rslt_t res = CY_RSLT_SUCCESS;
     size_t bytesReceived = 0;
     size_t bytesRead = 0;
     size_t bytesTobeRead = bytesRequested;
@@ -677,7 +757,6 @@ size_t IotNetworkSecureSockets_Receive( IotNetworkConnection_t pConnection,
 }
 
 /*-----------------------------------------------------------*/
-
 IotNetworkError_t IotNetworkSecureSockets_Close( IotNetworkConnection_t pConnection )
 {
     cy_rslt_t res = CY_RSLT_SUCCESS;
@@ -699,14 +778,12 @@ IotNetworkError_t IotNetworkSecureSockets_Close( IotNetworkConnection_t pConnect
 }
 
 /*-----------------------------------------------------------*/
-
 IotNetworkError_t IotNetworkSecureSockets_Destroy( IotNetworkConnection_t pConnection )
 {
     cy_rslt_t res = CY_RSLT_SUCCESS;
 
     /* Shutdown the network connection. */
     IotMutex_Lock( &( pConnection->callbackMutex ) );
-
     /* Free the tls_identity and free the root certificates for secured connection */
     if( pConnection->tls_identity != NULL )
     {
@@ -724,26 +801,14 @@ IotNetworkError_t IotNetworkSecureSockets_Destroy( IotNetworkConnection_t pConne
             return IOT_NETWORK_FAILURE;
         }
     }
-
     IotMutex_Unlock( &( pConnection->callbackMutex ) );
 
-    /* Check if this connection has a receive callback. If it does not, it can
-     * be destroyed here. Otherwise, notify the receive callback that destroy
-     * has been called and rely on the receive callback to clean up. */
-    if( ( pConnection->flags & FLAG_HAS_RECEIVE_CALLBACK ) == 0 )
-    {
-        _destroyConnection( pConnection );
-    }
-    else
-    {
-        IotSemaphore_Post( &( pConnection->destroyNotification ) );
-    }
+    _destroyConnection( pConnection );
 
     return IOT_NETWORK_SUCCESS;
 }
 
 /*-----------------------------------------------------------*/
-
 int IotNetworkSecureSockets_GetSocket( IotNetworkConnection_t pConnection )
 {
     /*

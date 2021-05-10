@@ -7,6 +7,10 @@ Refer to the [README.md](./README.md) for a complete description of the MQTT cli
 None
 
 ## Changelog
+### v2.1.0
+* Introduced asynchronous receive logic.
+* Added support for SAS token based authentication, for Azure borker connection.
+
 ### v2.0.0
 * Changes to adapt to ModusToolbox 2.2.0 flow and AnyCloud's support for multiple WiFi interfaces - STA, softAP and concurrent STA+softAP mode
 
@@ -21,7 +25,11 @@ This version of the library was validated for compatibility with the following s
 
 | Software and Tools                                      | Version |
 | :---                                                    | :----:  |
-| ModusToolbox Software Environment                       | 2.2     |
-| PSoC6 Peripheral Driver Library (PDL)                   | 2.0     |
+| ModusToolbox Software Environment                       | 2.3     |
+| - ModusToolbox Device Configurator                      | 3.0     |
+| - ModusToolbox CapSense Configurator / Tuner tools      | 3.15    |
+| PSoC 6 Peripheral Driver Library (PDL)                  | 2.2.0   |
 | GCC Compiler                                            | 9.3.1   |
 | IAR Compiler                                            | 8.32    |
+| Arm Compiler 6                                          | 6.14    |
+

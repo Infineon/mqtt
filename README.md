@@ -59,15 +59,15 @@ A "reasonable amount of time" to wait for keepalive responses from the MQTT brok
 - Configure the following macros defined in the *cyport/include/iot_config.h* file to enable/disable debug logs in this library:
 
   ```
-  #define IOT_LOG_LEVEL_GLOBAL                        IOT_LOG_ERROR   
-  #define IOT_LOG_LEVEL_DEMO                          IOT_LOG_ERROR   
-  #define IOT_LOG_LEVEL_PLATFORM                      IOT_LOG_ERROR   
-  #define IOT_LOG_LEVEL_NETWORK                       IOT_LOG_ERROR  
-  #define IOT_LOG_LEVEL_TASKPOOL                      IOT_LOG_ERROR  
-  #define IOT_LOG_LEVEL_MQTT                          IOT_LOG_ERROR  
-  #define AWS_IOT_LOG_LEVEL_SHADOW                    IOT_LOG_ERROR  
-  #define AWS_IOT_LOG_LEVEL_DEFENDER                  IOT_LOG_ERROR  
-  #define AWS_IOT_LOG_LEVEL_JOBS                      IOT_LOG_ERROR  
+  #define IOT_LOG_LEVEL_GLOBAL                        IOT_LOG_ERROR
+  #define IOT_LOG_LEVEL_DEMO                          IOT_LOG_ERROR
+  #define IOT_LOG_LEVEL_PLATFORM                      IOT_LOG_ERROR
+  #define IOT_LOG_LEVEL_NETWORK                       IOT_LOG_ERROR
+  #define IOT_LOG_LEVEL_TASKPOOL                      IOT_LOG_ERROR
+  #define IOT_LOG_LEVEL_MQTT                          IOT_LOG_ERROR
+  #define AWS_IOT_LOG_LEVEL_SHADOW                    IOT_LOG_ERROR
+  #define AWS_IOT_LOG_LEVEL_DEFENDER                  IOT_LOG_ERROR
+  #define AWS_IOT_LOG_LEVEL_JOBS                      IOT_LOG_ERROR
   ```
 
 ## Additional Information
