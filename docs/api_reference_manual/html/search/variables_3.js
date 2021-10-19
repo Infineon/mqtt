@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['hostname',['hostname',['../structcy__mqtt__broker__info__t.html#a1573327c42b9dd49610c55aa303e7fea',1,'cy_mqtt_broker_info_t']]],
-  ['hostname_5flen',['hostname_len',['../structcy__mqtt__broker__info__t.html#a38a8850406cc4f8e267e67837a23cd41',1,'cy_mqtt_broker_info_t']]]
+  ['xmutex',['xMutex',['../structiot__mutex__internal__t.html#ab8c1c51ed11b8bbd43b379c09bace64f',1,'iot_mutex_internal_t']]],
+  ['xsemaphore',['xSemaphore',['../structiot__sem__internal__t.html#abccebb999c2fddbb273abab65606d65a',1,'iot_sem_internal_t']]],
+  ['xtimerperiod',['xTimerPeriod',['../structtimer_info__t.html#a2c2984684e207437dd055184a478a36b',1,'timerInfo_t']]]
 ];

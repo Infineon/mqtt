@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['functions',['Functions',['../group__mqtt__api__functions.html',1,'']]]
+  ['configurations',['Configurations',['../group__mqtt__cyport__config.html',1,'']]]
 ];

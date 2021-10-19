@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.13"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>MQTT client library: API Reference</title>
+<title>MQTT client library: iot_mutex_internal_t Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -62,7 +62,7 @@ $(function() {
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('modules.html','');});
+$(document).ready(function(){initNavTree('structiot__mutex__internal__t.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -80,19 +80,38 @@ $(document).ready(function(){initNavTree('modules.html','');});
 </div>
 
 <div class="header">
+  <div class="summary">
+<a href="#pub-attribs">Data Fields</a>  </div>
   <div class="headertitle">
-<div class="title">API Reference</div>  </div>
+<div class="title">iot_mutex_internal_t Struct Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock">The following provides a list of API documentation</div><div class="directory">
-<div class="levels">[detail level <span onclick="javascript:toggleLevel(1);">1</span><span onclick="javascript:toggleLevel(2);">2</span>]</div><table class="directory">
-<tr id="row_0_" class="even"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__mqtt__api__call__sequence.html" target="_self">API Call Sequence</a></td><td class="desc">This section provides the details of the API call sequence for performing various MQTT operations </td></tr>
-<tr id="row_1_"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__mqtt__aws__iot__device__sdk__function.html" target="_self">AWS IoT Device SDK</a></td><td class="desc">This SDK provides MQTT 3.1.1 client library implementation </td></tr>
-<tr id="row_2_" class="even"><td class="entry"><span style="width:0px;display:inline-block;">&#160;</span><span id="arr_2_" class="arrow" onclick="toggleFolder('2_')">&#9660;</span><a class="el" href="group__mqtt__cyport.html" target="_self">Platform Port Layer</a></td><td class="desc">Cypress platform port layer functions and configurations </td></tr>
-<tr id="row_2_0_"><td class="entry"><span style="width:32px;display:inline-block;">&#160;</span><a class="el" href="group__mqtt__cyport__function.html" target="_self">Functions</a></td><td class="desc">Cypress platform port layer functions </td></tr>
-<tr id="row_2_1_" class="even"><td class="entry"><span style="width:32px;display:inline-block;">&#160;</span><a class="el" href="group__mqtt__cyport__config.html" target="_self">Configurations</a></td><td class="desc">Cypress platform port layer configurations </td></tr>
+<a name="details" id="details"></a><h2 class="groupheader">Description</h2>
+<div class="textblock"><p>Holds information about an active Mutex. </p>
+</div><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+Data Fields</h2></td></tr>
+<tr class="memitem:ab8c1c51ed11b8bbd43b379c09bace64f"><td class="memItemLeft" align="right" valign="top">cy_mutex_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structiot__mutex__internal__t.html#ab8c1c51ed11b8bbd43b379c09bace64f">xMutex</a></td></tr>
+<tr class="memdesc:ab8c1c51ed11b8bbd43b379c09bace64f"><td class="mdescLeft">&#160;</td><td class="mdescRight">cyabs_rtos mutex.  <a href="#ab8c1c51ed11b8bbd43b379c09bace64f">More...</a><br /></td></tr>
+<tr class="separator:ab8c1c51ed11b8bbd43b379c09bace64f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-</div><!-- directory -->
+<h2 class="groupheader">Field Documentation</h2>
+<a id="ab8c1c51ed11b8bbd43b379c09bace64f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab8c1c51ed11b8bbd43b379c09bace64f">&#9670;&nbsp;</a></span>xMutex</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_mutex_t iot_mutex_internal_t::xMutex</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>cyabs_rtos mutex. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

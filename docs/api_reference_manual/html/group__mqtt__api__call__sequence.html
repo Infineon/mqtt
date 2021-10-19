@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.13"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>MQTT client library: API Reference</title>
+<title>MQTT client library: API Call Sequence</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -62,7 +62,7 @@ $(function() {
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('modules.html','');});
+$(document).ready(function(){initNavTree('group__mqtt__api__call__sequence.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -81,19 +81,67 @@ $(document).ready(function(){initNavTree('modules.html','');});
 
 <div class="header">
   <div class="headertitle">
-<div class="title">API Reference</div>  </div>
+<div class="title">API Call Sequence</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock">The following provides a list of API documentation</div><div class="directory">
-<div class="levels">[detail level <span onclick="javascript:toggleLevel(1);">1</span><span onclick="javascript:toggleLevel(2);">2</span>]</div><table class="directory">
-<tr id="row_0_" class="even"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__mqtt__api__call__sequence.html" target="_self">API Call Sequence</a></td><td class="desc">This section provides the details of the API call sequence for performing various MQTT operations </td></tr>
-<tr id="row_1_"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__mqtt__aws__iot__device__sdk__function.html" target="_self">AWS IoT Device SDK</a></td><td class="desc">This SDK provides MQTT 3.1.1 client library implementation </td></tr>
-<tr id="row_2_" class="even"><td class="entry"><span style="width:0px;display:inline-block;">&#160;</span><span id="arr_2_" class="arrow" onclick="toggleFolder('2_')">&#9660;</span><a class="el" href="group__mqtt__cyport.html" target="_self">Platform Port Layer</a></td><td class="desc">Cypress platform port layer functions and configurations </td></tr>
-<tr id="row_2_0_"><td class="entry"><span style="width:32px;display:inline-block;">&#160;</span><a class="el" href="group__mqtt__cyport__function.html" target="_self">Functions</a></td><td class="desc">Cypress platform port layer functions </td></tr>
-<tr id="row_2_1_" class="even"><td class="entry"><span style="width:32px;display:inline-block;">&#160;</span><a class="el" href="group__mqtt__cyport__config.html" target="_self">Configurations</a></td><td class="desc">Cypress platform port layer configurations </td></tr>
-</table>
-</div><!-- directory -->
-</div><!-- contents -->
+<p>This section provides the details of the API call sequence for performing various MQTT operations. </p>
+<p>This call sequence uses APIs defined by AWS IoT Device SDK library and the Cypress Platform Port layer.</p>
+<p>Refer to <a class="el" href="group__mqtt__aws__iot__device__sdk__function.html">AWS IoT Device SDK</a> and <a class="el" href="group__mqtt__cyport.html">Platform Port Layer</a> sections for the API details.</p>
+<h1><a class="anchor" id="section2_1"></a>
+For Connect, Subscribe and Publish</h1>
+<p>The API call sequence given below should be used to connect to a MQTT broker and to perform MQTT subscribe and publish operations: </p><pre class="fragment">                    +-----------------+
+                    |  IotSdk_Init()  |
+                    +-----------------+
+                             |
+                             v
+            +----------------------------------+
+            |  IotNetworkSecureSockets_Init()  |
+            +----------------------------------+
+                             |
+                             v
+                   +------------------+
+                   |  IotMqtt_Init()  |
+                   +------------------+
+                             |
+                             v
+                  +---------------------+
+                  |  IotMqtt_Connect()  |
+                  +---------------------+
+                             |
+                             v
+                 +-----------------------+
+                 |  IotMqtt_Subscribe()  |
+                 +-----------------------+
+                             |
+                             v
+               +--------------------------+
+               |  IotMqtt_PublishAsync()  |
+               +--------------------------+
+</pre><h1><a class="anchor" id="section2_2"></a>
+For UnSubscribe, Disconnect and DeInit</h1>
+<p>The API call sequence given below should be used to perform MQTT unsubscribe and disconnect operations with the MQTT broker: </p><pre class="fragment">               +-------------------------+
+               |  IotMqtt_Unsubscribe()  |
+               +-------------------------+
+                             |
+                             v
+               +-------------------------+
+               |  IotMqtt_Disconnect()   |
+               +-------------------------+
+                             |
+                             v
+                 +---------------------+
+                 |  IotMqtt_Cleanup()  |
+                 +---------------------+
+                             |
+                             v
+          +-------------------------------------+
+          |  IotNetworkSecureSockets_Cleanup()  |
+          +-------------------------------------+
+                             |
+                             v
+                  +--------------------+
+                  |  IotSdk_Cleanup()  |
+                  +--------------------+</pre></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath">

@@ -1,6 +1,6 @@
 var NAVTREE =
 [
-  [ "Cypress MQTT library", "index.html", [
+  [ "MQTT client library", "index.html", [
     [ "Overview", "index.html", null ],
     [ "API Reference", "modules.html", "modules" ]
   ] ]
@@ -8,7 +8,7 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"group__group__c__api.html"
+"group__mqtt__api__call__sequence.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
