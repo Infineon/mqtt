@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['handle',['handle',['../structthread_info__t.html#a2e769d08eeab26500b127cc2f51d30c5',1,'threadInfo_t']]]
+  ['allocated_5fqos',['allocated_qos',['../structcy__mqtt__subscribe__info__t.html#aab71d487d9ba575b91bb7845e288465d',1,'cy_mqtt_subscribe_info_t']]]
 ];

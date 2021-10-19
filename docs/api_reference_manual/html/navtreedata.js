@@ -8,7 +8,7 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"group__mqtt__api__call__sequence.html"
+"group__group__c__api.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

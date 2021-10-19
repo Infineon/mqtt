@@ -1,5 +1,9 @@
 var searchData=
 [
-  ['iot_5fmutex_5finternal_5ft',['iot_mutex_internal_t',['../structiot__mutex__internal__t.html',1,'']]],
-  ['iot_5fsem_5finternal_5ft',['iot_sem_internal_t',['../structiot__sem__internal__t.html',1,'']]]
+  ['cy_5fmqtt_5fbroker_5finfo_5ft',['cy_mqtt_broker_info_t',['../structcy__mqtt__broker__info__t.html',1,'']]],
+  ['cy_5fmqtt_5fconnect_5finfo_5ft',['cy_mqtt_connect_info_t',['../structcy__mqtt__connect__info__t.html',1,'']]],
+  ['cy_5fmqtt_5fevent_5ft',['cy_mqtt_event_t',['../structcy__mqtt__event__t.html',1,'']]],
+  ['cy_5fmqtt_5fmessage_5ft',['cy_mqtt_message_t',['../structcy__mqtt__message__t.html',1,'']]],
+  ['cy_5fmqtt_5fpublish_5finfo_5ft',['cy_mqtt_publish_info_t',['../structcy__mqtt__publish__info__t.html',1,'']]],
+  ['cy_5fmqtt_5fsubscribe_5finfo_5ft',['cy_mqtt_subscribe_info_t',['../structcy__mqtt__subscribe__info__t.html',1,'']]]
 ];
