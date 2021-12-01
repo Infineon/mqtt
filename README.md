@@ -48,13 +48,17 @@ Some of the key features include:
 
 - [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-LAI-4373M2)](https://www.cypress.com/documentation/development-kitsboards/psoc-62s2-evaluation-kit-cy8ceval-062s2)
 
+- [CYW943907AEVAL1F Evaluation Kit(CYW943907AEVAL1F)](https://www.cypress.com/documentation/development-kitsboards/cyw943907aeval1f-evaluation-kit)
+
+- [CYW954907AEVAL1F Evaluation Kit(CYW954907AEVAL1F)](https://www.cypress.com/documentation/development-kitsboards/cyw954907aeval1f-evaluation-kit)
+
 ## Dependent libraries
 
 This MQTT client library depends on the following libraries. These libraries are included by default.
 
-- [Wi-Fi middleware core](https://github.com/cypresssemiconductorco/wifi-mw-core)
+- [Wi-Fi middleware core](https://github.com/Infineon/wifi-mw-core)
 
-- [AWS IoT device SDK port](https://github.com/cypresssemiconductorco/aws-iot-device-sdk-port)
+- [AWS IoT device SDK port](https://github.com/Infineon/aws-iot-device-sdk-port)
 
 - [AWS IoT device SDK MQTT library](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00)
 
@@ -76,6 +80,8 @@ This MQTT client library depends on the following libraries. These libraries are
    `CY_MQTT_MESSAGE_SEND_TIMEOUT_MS` | MQTT message send timeout | `DEFINES += CY_MQTT_MESSAGE_SEND_TIMEOUT_MS=3000`
    `CY_MQTT_MESSAGE_RECEIVE_TIMEOUT_MS` | MQTT message receive timeout | `DEFINES += CY_MQTT_MESSAGE_RECEIVE_TIMEOUT_MS=500`
    `CY_MQTT_MAX_RETRY_VALUE` | MQTT library retry mechanism for MQTT publish/subscribe/unsubscribe messages if the acknowledgement is not received from the broker on time. You can configure the maximum number of retries. | `DEFINES += CY_MQTT_MAX_RETRY_VALUE=3`
+   `CY_MQTT_MAX_OUTGOING_PUBLISHES` | If user need to perform multiple publish operations simultaneously on a single MQTT instance, then `CY_MQTT_MAX_OUTGOING_PUBLISHES` macro needs be configured with the number of simultaneous publish operation that user wants to perform. For the default value of this macro, refer to MQTT library API header file. This macro can be configured by adding a define in the application Makefile. | `DEFINES += CY_MQTT_MAX_OUTGOING_PUBLISHES=2`
+   `CY_MQTT_MAX_OUTGOING_SUBSCRIBES` | If user need to perform multiple subscribe operations simultaneously on a single MQTT instance, then `CY_MQTT_MAX_OUTGOING_SUBSCRIBES` macro needs be configured with the number of simultaneous subscribe operation that user wants to perform. For the default value of this macro, refer to MQTT library API header file. This macro can be configured by adding a define in the application Makefile. | `DEFINES += CY_MQTT_MAX_OUTGOING_SUBSCRIBES=2`
    `MQTT_PINGRESP_TIMEOUT_MS` | A "reasonable amount of time" (timeout value) to wait for keepalive response from the MQTT broker | `DEFINES += MQTT_PINGRESP_TIMEOUT_MS=5000`
    `MQTT_RECV_POLLING_TIMEOUT_MS` | A "maximum polling duration" that is allowed without any data reception from the network for the incoming packet | `DEFINES += MQTT_RECV_POLLING_TIMEOUT_MS=1000`
    `MQTT_SEND_RETRY_TIMEOUT_MS` | A "maximum duration" that is allowed for no data transmission over the network through the transport send function | `DEFINES += MQTT_SEND_RETRY_TIMEOUT_MS=500`
@@ -83,9 +89,9 @@ This MQTT client library depends on the following libraries. These libraries are
 
 **Note:** It is important to note that having `MQTT_RECV_POLLING_TIMEOUT_MS` timeout too short will result in MQTT being disconnected due to the possibility of partial data being received. If you have small TCP buffers and a high latency network, the optimum value for the timeout can be surprisingly long. In such cases, optimum value for the timeout can be better determined based on experimenting the MQTT applications with payloads bigger than the TCP buffer. See [AWS coreMQTT documentation](https://docs.aws.amazon.com/embedded-csdk/202103.00/lib-ref/libraries/standard/coreMQTT/docs/doxygen/output/html/mqtt_timeouts.html#mqtt_timeouts_receive_polling) for more details.<br>
 
-5. Review and make the required changes to the pre-defined configuration files bundled with the wifi-mw-core library for FreeRTOS, lwIP, and Mbed TLS. See [README.md](https://github.com/cypresssemiconductorco/wifi-mw-core/blob/master/README.md) for details.
+5. Review and make the required changes to the pre-defined configuration files bundled with the wifi-mw-core library for FreeRTOS, lwIP, and Mbed TLS. See [README.md](https://github.com/Infineon/wifi-mw-core/blob/master/README.md) for details.
 
-6. Define the following COMPONENTS in the application Makefile for the MQTT library. See [README.md](https://github.com/cypresssemiconductorco/wifi-mw-core/blob/master/README.md).
+6. Define the following COMPONENTS in the application Makefile for the MQTT library. See [README.md](https://github.com/Infineon/wifi-mw-core/blob/master/README.md).
     ```
     COMPONENTS=FREERTOS MBEDTLS LWIP SECURE_SOCKETS
     ```
@@ -122,7 +128,7 @@ The MQTT library disables all debug log messages by default. Do the following to
     DEFINES+=ENABLE_MQTT_LOGS
     ```
 
-2. Call the `cy_log_init()` function provided by the *cy-log* module. cy-log is part of the *connectivity-utilities* library. See [connectivity-utilities library API documentation](https://cypresssemiconductorco.github.io/connectivity-utilities/api_reference_manual/html/group__logging__utils.html) for cy-log details.
+2. Call the `cy_log_init()` function provided by the *cy-log* module. cy-log is part of the *connectivity-utilities* library. See [connectivity-utilities library API documentation](https://infineon.github.io/connectivity-utilities/api_reference_manual/html/group__logging__utils.html) for cy-log details.
 
 
 ## Usage notes
@@ -197,7 +203,7 @@ Do the following to establish a connection with the broker using credentials sto
 
 - [MQTT client library RELEASE.md](./RELEASE.md)
 
-- [MQTT client API documentation](https://cypresssemiconductorco.github.io/mqtt/api_reference_manual/html/index.html)
+- [MQTT client API documentation](https://infineon.github.io/mqtt/api_reference_manual/html/index.html)
 
 - [ModusToolbox&trade; software environment, quick start guide, documentation, and videos](https://www.cypress.com/products/modustoolbox-software-environment)
 

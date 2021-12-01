@@ -371,13 +371,22 @@ static cy_rslt_t mqtt_get_next_free_index_for_publish( cy_mqtt_object_t *mqtt_ob
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
     uint8_t   index  = 0;
-    bool slot_found = false;
 
     if( (mqtt_obj == NULL) || (pindex == NULL) )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to mqtt_get_next_free_index_for_publish." );
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        return result;
+    }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Acquired Mutex %p ", mqtt_obj->process_mutex );
 
     for( index = 0; index < CY_MQTT_MAX_OUTGOING_PUBLISHES; index++ )
     {
@@ -386,17 +395,23 @@ static cy_rslt_t mqtt_get_next_free_index_for_publish( cy_mqtt_object_t *mqtt_ob
         if( mqtt_obj->outgoing_pub_packets[ index ].packetid == MQTT_PACKET_ID_INVALID )
         {
             result = CY_RSLT_SUCCESS;
-            slot_found = true;
+            mqtt_obj->outgoing_pub_packets[ index ].packetid = MQTT_GetPacketId( &(mqtt_obj->mqtt_context) );
+            *pindex = index;
             break;
         }
     }
 
-    if( slot_found == true )
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Releasing Mutex %p ", mqtt_obj->process_mutex );
+    result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
+    if( result != CY_RSLT_SUCCESS )
     {
-        /* Copy the available index into the output param. */
-        *pindex = index;
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+
+        return result;
     }
-    else
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Released Mutex %p ", mqtt_obj->process_mutex );
+
+    if( index >= CY_MQTT_MAX_OUTGOING_PUBLISHES )
     {
         result = CY_RSLT_MODULE_MQTT_ERROR;
     }
@@ -1762,7 +1777,6 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_publish - Acquired Mutex %p ", mqtt_obj->process_mutex );
 
         /* Get a new packet ID. */
-        mqtt_obj->outgoing_pub_packets[ publishIndex ].packetid = MQTT_GetPacketId( &(mqtt_obj->mqtt_context) );
         mqtt_obj->pub_ack_status.packetid = mqtt_obj->outgoing_pub_packets[ publishIndex ].packetid;
 
         /* Stop MQTT Ping Timer */

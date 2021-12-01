@@ -231,14 +231,16 @@ extern "C" {
  * Configure value of maximum number of outgoing publishes maintained in MQTT library
  * until an ack is received from the broker.
  */
+#ifndef CY_MQTT_MAX_OUTGOING_PUBLISHES
 #define CY_MQTT_MAX_OUTGOING_PUBLISHES           ( 1U )
-
+#endif
 /**
  * Configure value of maximum number of outgoing subscription topics maintained in MQTT library
  * until an ack is received from the broker.
  */
+#ifndef CY_MQTT_MAX_OUTGOING_SUBSCRIBES
 #define CY_MQTT_MAX_OUTGOING_SUBSCRIBES          ( 5U )
-
+#endif
 /**
  * @}
  */
