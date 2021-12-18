@@ -52,6 +52,8 @@ Some of the key features include:
 
 - [CYW954907AEVAL1F Evaluation Kit(CYW954907AEVAL1F)](https://www.cypress.com/documentation/development-kitsboards/cyw954907aeval1f-evaluation-kit)
 
+- [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-MUR-43439M2)](https://www.cypress.com/documentation/development-kitsboards/psoc-62s2-evaluation-kit-cy8ceval-062s2)
+
 ## Dependent libraries
 
 This MQTT client library depends on the following libraries. These libraries are included by default.

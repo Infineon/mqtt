@@ -1025,6 +1025,7 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
 
                 /* Reset keepAliveSeconds to 0 to avoid timer activity after disconnection */
                 mqtt_obj->keepAliveSeconds = 0;
+                event.type = CY_MQTT_EVENT_TYPE_DISCONNECT;
 
                 if( mqtt_obj->mqtt_session_established == true )
                 {
