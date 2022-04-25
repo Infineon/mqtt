@@ -112,6 +112,10 @@ This MQTT client library depends on the following libraries. These libraries are
    `CY_SECURE_SOCKETS_PKCS_SUPPORT` | Enables PKCS-PSA support on secured platforms such as CY8CKIT-064S0S2-4343W | `DEFINES+=CY_SECURE_SOCKETS_PKCS_SUPPORT`
 <br>
 
+**Note:** Secured platform like CY8CKIT-064S0S2-4343W use trusted-firmware-m library for crypto operations. Due to security vulnerability in HW acceleration, trusted-firmware-m version v1.3.3 uses software implementation for ECC crypto algorithm. Since the software implementation is slower, it is recommended to set configEXPECTED_IDLE_TIME_BEFORE_SLEEP to atleast 100.
+    
+    - configEXPECTED_IDLE_TIME_BEFORE_SLEEP value can be changed in the application's FreeRTOSConfig.h
+
 9. Add the trusted firmware library include path before the MBEDTLS library include path in the application Makefile. This is required to compile the MQTT library for secured platforms such as CY8CKIT-064S0S2-4343W. The Makefile entry should look like as follows:
     ```
     INCLUDES=$(call CY_MACRO_FINDLIB,trusted-firmware-m)/COMPONENT_TFM_NS_INTERFACE/include

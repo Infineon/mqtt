@@ -1,6 +1,6 @@
 var group__mqtt__api__functions =
 [
-    [ "cy_mqtt_callback_t", "group__mqtt__api__functions.html#ga681347571799dfdde83ea39fdc1389a0", null ],
+    [ "cy_mqtt_callback_t", "group__mqtt__api__functions.html#ga127e0c74fd6f6025f4866d581256df96", null ],
     [ "cy_mqtt_init", "group__mqtt__api__functions.html#ga5386e4d0061fd77c3f68ba29553b3414", null ],
     [ "cy_mqtt_create", "group__mqtt__api__functions.html#ga6637e2df9ebc12dfb98841fc38c88ce9", null ],
     [ "cy_mqtt_connect", "group__mqtt__api__functions.html#ga2ffecf6ed7940d97c2c6fbc83783417b", null ],

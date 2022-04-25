@@ -10,6 +10,10 @@ See the [README.md](./README.md) for a complete description of the MQTT client l
 
 ## Changelog
 
+### v3.4.1
+
+- Documentation update
+
 ### v3.4.0
 
 - Added support for CY8CEVAL-062S2-MUR-43439M2 kit

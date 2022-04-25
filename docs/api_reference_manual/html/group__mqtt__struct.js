@@ -39,7 +39,7 @@ var group__mqtt__struct =
       [ "type", "structcy__mqtt__event__t.html#a9823ea0788cb4e0bd82efd19d195b13e", null ],
       [ "reason", "structcy__mqtt__event__t.html#abbc35b761acab1cda2d4f85418f9c32e", null ],
       [ "pub_msg", "structcy__mqtt__event__t.html#a73dadd9c182b0786d9ed11fb7bb91c65", null ],
-      [ "data", "structcy__mqtt__event__t.html#abcd47d67886ef09e5c10681cdc90df99", null ]
+      [ "data", "structcy__mqtt__event__t.html#a3f9c7a86ef0794a434c7c1f34605a15f", null ]
     ] ],
     [ "cy_mqtt_received_msg_info_t", "group__mqtt__struct.html#gac201fb43c325826b1b2c83b2eb8052cf", null ],
     [ "cy_mqtt_unsubscribe_info_t", "group__mqtt__struct.html#gafd0d1488be43b96eef830bb7f8c1653e", null ],
