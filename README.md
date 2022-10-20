@@ -1,6 +1,6 @@
 # MQTT client library
 
-This repo contains the MQTT client library that can work with the family of Infineon connectivity devices. This library uses the AWS IoT device SDK MQTT client library and implements the glue layer that is required for the library to work with CYPRESS&trade; connectivity platforms.
+This repo contains the MQTT client library that can work with the family of Infineon connectivity devices. This library uses the AWS IoT device SDK MQTT client library and implements the glue layer that is required for the library to work with Infineon&trade; connectivity platforms.
 
 The ModusToolbox&trade; MQTT client code examples download this library automatically, so you don't need to.
 
@@ -28,9 +28,7 @@ Some of the key features include:
 
 - Supports authentication based on both X509 certificate and SAS tokens for MQTT connection with Azure broker
 
-- Glue layer implementation for MQTT library to work on CYPRESS&trade; connectivity platforms
-
-- Built on top of FreeRTOS, lwIP, and Mbed TLS (that are bundled as part of Wi-Fi middleware core library)
+- Glue layer implementation for MQTT library to work on Infineon&trade; connectivity platforms
 
 **Note:** Using this library in a project will cause the AWS IoT device SDK to be downloaded on your computer. It is your responsibility to understand and accept the AWS IoT Device SDK license.
 
@@ -38,33 +36,29 @@ Some of the key features include:
 
 ## Supported platforms
 
-- [PSoC&trade; 6 Wi-Fi Bluetooth&reg; prototyping kit (CY8CPROTO-062-4343W)](https://www.cypress.com/documentation/development-kitsboards/psoc-6-wi-fi-bt-prototyping-kit-cy8cproto-062-4343w)
+- [PSoC&trade; 6 Wi-Fi Bluetooth&reg; prototyping kit  (CY8CPROTO-062-4343W)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8cproto-062-4343w/)
 
-- [PSoC&trade; 62S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062S2-43012)](https://www.cypress.com/documentation/development-kitsboards/psoc-62s2-wi-fi-bt-pioneer-kit-cy8ckit-062s2-43012)
+- [PSoC&trade; 62S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062S2-43012)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-062s2-43012/)
 
-- [PSoC&trade; 6 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062-WiFi-BT)](https://www.cypress.com/documentation/development-kitsboards/psoc-6-wifi-bt-pioneer-kit-cy8ckit-062-wifi-bt)
+- [PSoC&trade; 6 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062-WiFi-BT)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-062-wifi-bt/)
 
-- [PSoC&trade; 64S0S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-064S0S2-4343W)](https://www.cypress.com/documentation/development-kitsboards/psoc-64-standard-secure-aws-wi-fi-bt-pioneer-kit-cy8ckit)
+- [PSoC&trade; 64S0S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-064S0S2-4343W)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-064s0s2-4343w/)
 
-- [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-LAI-4373M2)](https://www.cypress.com/documentation/development-kitsboards/psoc-62s2-evaluation-kit-cy8ceval-062s2)
+- [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-LAI-4373M2)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/)
 
-- [CYW943907AEVAL1F Evaluation Kit(CYW943907AEVAL1F)](https://www.cypress.com/documentation/development-kitsboards/cyw943907aeval1f-evaluation-kit)
+- [CYW954907AEVAL1F evaluation kit (CYW954907AEVAL1F)](https://www.infineon.com/cms/en/product/evaluation-boards/cyw954907aeval1f/)
 
-- [CYW954907AEVAL1F Evaluation Kit(CYW954907AEVAL1F)](https://www.cypress.com/documentation/development-kitsboards/cyw954907aeval1f-evaluation-kit)
+- [CYW943907AEVAL1F Evaluation Kit (CYW943907AEVAL1F)](https://www.infineon.com/cms/en/product/evaluation-boards/cyw943907aeval1f/)
 
-- [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-MUR-43439M2)](https://www.cypress.com/documentation/development-kitsboards/psoc-62s2-evaluation-kit-cy8ceval-062s2)
+- [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-MUR-43439M2)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/)
 
 ## Dependent libraries
 
 This MQTT client library depends on the following libraries. These libraries are included by default.
 
-- [Wi-Fi middleware core](https://github.com/Infineon/wifi-mw-core)
-
 - [AWS IoT device SDK port](https://github.com/Infineon/aws-iot-device-sdk-port)
 
 - [AWS IoT device SDK MQTT library](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00)
-
-
 
 ## Quick start
 
@@ -91,9 +85,11 @@ This MQTT client library depends on the following libraries. These libraries are
 
 **Note:** It is important to note that having `MQTT_RECV_POLLING_TIMEOUT_MS` timeout too short will result in MQTT being disconnected due to the possibility of partial data being received. If you have small TCP buffers and a high latency network, the optimum value for the timeout can be surprisingly long. In such cases, optimum value for the timeout can be better determined based on experimenting the MQTT applications with payloads bigger than the TCP buffer. See [AWS coreMQTT documentation](https://docs.aws.amazon.com/embedded-csdk/202103.00/lib-ref/libraries/standard/coreMQTT/docs/doxygen/output/html/mqtt_timeouts.html#mqtt_timeouts_receive_polling) for more details.<br>
 
-5. Review and make the required changes to the pre-defined configuration files bundled with the wifi-mw-core library for FreeRTOS, lwIP, and Mbed TLS. See [README.md](https://github.com/Infineon/wifi-mw-core/blob/master/README.md) for details.
+5.  5. Review and make the required changes to the pre-defined configuration files.
+ - The configuration files are bundled with the wifi-mw-core library for FreeRTOS, lwIP, and Mbed TLS. See [README.md](https://github.com/Infineon/wifi-mw-core/blob/master/README.md) for details.
+ - If the application is using bundle library then the configuration files are in the bundle library. For example if the application is using **Wi-Fi core freertos lwip mbedtls bundle library**, the configuration files are in `wifi-core-freertos-lwip-mbedtls/configs` folder. Similarly if the application is using **Ethernet Core FreeRTOS lwIP mbedtls library**, the configuration files are in `ethernet-core-freertos-lwip-mbedtls/configs` folder.
 
-6. Define the following COMPONENTS in the application Makefile for the MQTT library. See [README.md](https://github.com/Infineon/wifi-mw-core/blob/master/README.md).
+6. Define the following COMPONENTS in the application's Makefile for the Azure port library.
     ```
     COMPONENTS=FREERTOS MBEDTLS LWIP SECURE_SOCKETS
     ```
@@ -118,7 +114,7 @@ This MQTT client library depends on the following libraries. These libraries are
 
 9. Add the trusted firmware library include path before the MBEDTLS library include path in the application Makefile. This is required to compile the MQTT library for secured platforms such as CY8CKIT-064S0S2-4343W. The Makefile entry should look like as follows:
     ```
-    INCLUDES=$(call CY_MACRO_FINDLIB,trusted-firmware-m)/COMPONENT_TFM_NS_INTERFACE/include
+    INCLUDES=$(SEARCH_trusted-firmware-m)/COMPONENT_TFM_NS_INTERFACE/include
     INCLUDES+=libs/trusted-firmware-m/COMPONENT_TFM_NS_INTERFACE/include
     ```
 
@@ -172,11 +168,11 @@ The MQTT library disables all debug log messages by default. Do the following to
 
 For secured platforms such as CY8CKIT-064S0S2-4343W, the library depends on other libraries for PKCS-PSA support. Do the following to add dependent libraries:
 
-1. If using *.lib* files, create a *.lib* file for freertos-pkcs11-psa as follows and add *.lib* file along with other dependent library *.lib* files:
+1. If using .lib files, create a *.lib* file for freertos-pkcs11-psa as follows and add .lib file along with other dependent library .lib files:
 
-   *freertos-pkcs11-psa.lib*: https://github.com/Linaro/freertos-pkcs11-psa/#80292d24f4978891b0fd35feeb5f1d6f6f0fff06
+    *freertos-pkcs11-psa.lib*: https://github.com/Linaro/freertos-pkcs11-psa/#80292d24f4978891b0fd35feeb5f1d6f6f0fff06
 
-2. If using *.mtb* files, create a *.mtb* file for freertos-pkcs11-psa as follows and add *.mtb* file along with other dependent library *.mtb* files:
+2. If using .mtb files, create a *.mtb file* for freertos-pkcs11-psa as follows and add .mtb file along with other dependent library *.mtb* files
 
    *freertos-pkcs11-psa.mtb*: https://github.com/Linaro/freertos-pkcs11-psa/#80292d24f4978891b0fd35feeb5f1d6f6f0fff06#$$ASSET_REPO$$/freertos-pkcs11-psa/master
 
@@ -187,7 +183,7 @@ For secured platforms such as CY8CKIT-064S0S2-4343W, the library depends on othe
 
 Do the following to establish a connection with the broker using credentials stored in the secured memory for secured platforms such as CY8CKIT-064S0S2-4343W:
 
-1. Provision the kit with the device and RootCA certificates. See [Device provisioning steps](https://community.cypress.com/t5/Resource-Library/Provisioning-Guide-for-the-Cypress-CY8CKIT-064S0S2-4343W-Kit/ta-p/252469).
+1. Provision the kit with the device and RootCA certificates. See [Device provisioning steps](https://community.infineon.com/t5/Resource-Library/Provisioning-Guide-for-the-Cypress-CY8CKIT-064S0S2-4343W-Kit/ta-p/252469).
 
 2. User can update device certificate and RootCA certificate by modifying respective the policy *.json* file with the device and RootCA certificate paths to be provisioned to the secured element as follows:
 
@@ -211,7 +207,7 @@ Do the following to establish a connection with the broker using credentials sto
 
 - [MQTT client API documentation](https://infineon.github.io/mqtt/api_reference_manual/html/index.html)
 
-- [ModusToolbox&trade; software environment, quick start guide, documentation, and videos](https://www.cypress.com/products/modustoolbox-software-environment)
+- [ModusToolbox&trade; software environment, quick start guide, documentation, and videos](https://www.infineon.com/cms/en/design-support/tools/sdk/modustoolbox-software/)
 
 - [AWS-IoT device SDK library](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00)
 

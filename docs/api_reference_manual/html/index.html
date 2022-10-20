@@ -96,7 +96,7 @@ Library components</h1>
 <p ><a href="https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00">AWS-IoT Device SDK C Library Link</a></p>
 <h2><a class="anchor" id="section1_1"></a>
 MQTT wrapper layer</h2>
-<p >This wrapper layer provides the APIs that are required to perform MQTT publish and subscribe operations on Cypress platforms. This layer contains APIs that are used for creating MQTT instances, establishing "secure" or non-secure MQTT client session with an MQTT broker to send and receive MQTT messages. This layer also handles retry logic for failed publish messages.</p>
+<p >This wrapper layer provides the APIs that are required to perform MQTT publish and subscribe operations on Infineon platforms. This layer contains APIs that are used for creating MQTT instances, establishing "secure" or non-secure MQTT client session with an MQTT broker to send and receive MQTT messages. This layer also handles retry logic for failed publish messages.</p>
 <h2><a class="anchor" id="section1_2"></a>
 AWS IoT Device SDK C - Tag: 202103.00</h2>
 <p >This is an open-source MQTT library developed and maintained by Amazon. This library implements the core MQTT protocol logic.</p>
@@ -114,20 +114,19 @@ AWS IoT Device SDK C - Tag: 202103.00</h2>
 </ul>
 <h1><a class="anchor" id="section_platforms"></a>
 Supported platforms</h1>
-<p >This library and its features are supported on the following Cypress platforms:</p><ul>
-<li><a href="https://www.cypress.com/documentation/development-kitsboards/psoc-6-wi-fi-bt-prototyping-kit-cy8cproto-062-4343w">PSoC&trade; 6 Wi-Fi Bluetooth&reg; prototyping kit (CY8CPROTO-062-4343W)</a></li>
-<li><a href="https://www.cypress.com/documentation/development-kitsboards/psoc-62s2-wi-fi-bt-pioneer-kit-cy8ckit-062s2-43012">PSoC&trade; 62S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062S2-43012)</a></li>
-<li><a href="https://www.cypress.com/documentation/development-kitsboards/psoc-6-wifi-bt-pioneer-kit-cy8ckit-062-wifi-bt">PSoC&trade; 6 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062-WiFi-BT)</a></li>
-<li><a href="https://www.cypress.com/documentation/development-kitsboards/psoc-64-standard-secure-aws-wi-fi-bt-pioneer-kit-cy8ckit">PSoC&trade; 64S0S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-064S0S2-4343W)</a></li>
-<li><a href="https://www.cypress.com/documentation/development-kitsboards/psoc-62s2-evaluation-kit-cy8ceval-062s2">PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-LAI-4373M2)</a></li>
-<li><a href="https://www.cypress.com/documentation/development-kitsboards/cyw943907aeval1f-evaluation-kit">CYW943907AEVAL1F Evaluation Kit(CYW943907AEVAL1F)</a></li>
-<li><a href="https://www.cypress.com/documentation/development-kitsboards/cyw954907aeval1f-evaluation-kit">CYW954907AEVAL1F Evaluation Kit(CYW954907AEVAL1F)</a></li>
-<li><a href="https://www.cypress.com/documentation/development-kitsboards/psoc-62s2-evaluation-kit-cy8ceval-062s2">PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-MUR-43439M2)</a></li>
+<p >This library and its features are supported on the following Infineon platforms:</p><ul>
+<li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cy8cproto-062-4343w/">PSoC&trade; 6 Wi-Fi Bluetooth&reg; prototyping kit (CY8CPROTO-062-4343W)</a></li>
+<li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-062s2-43012/">PSoC&trade; 62S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062S2-43012)</a></li>
+<li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-062-wifi-bt/">PSoC&trade; 6 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062-WiFi-BT)</a></li>
+<li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-064s0s2-4343w/">PSoC&trade; 64S0S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-064S0S2-4343W)</a></li>
+<li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/">PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-LAI-4373M2)</a></li>
+<li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cyw954907aeval1f/">CYW943907AEVAL1F Evaluation Kit(CYW943907AEVAL1F)</a></li>
+<li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cyw943907aeval1f/">CYW954907AEVAL1F Evaluation Kit(CYW954907AEVAL1F)</a></li>
+<li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/">PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-MUR-43439M2)</a></li>
 </ul>
 <h1><a class="anchor" id="section_dependencies"></a>
 Dependent libraries</h1>
-<p >This MQTT client library depends on the following libraries. Both these libraries are included by default.</p><ul>
-<li><a href="https://github.com/Infineon/wifi-mw-core">Wi-Fi middleware core</a></li>
+<p >This MQTT client library depends on the following library. This library is included by default.</p><ul>
 <li><a href="https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00">AWS-IoT device SDK library</a></li>
 </ul>
 <h1><a class="anchor" id="section_quick_start"></a>
@@ -167,8 +166,12 @@ Quick start</h1>
 <div class="ttc" id="agroup__mqtt__defines_html_gacce957bd0962c40b85a0a53124f9a7f4"><div class="ttname"><a href="group__mqtt__defines.html#gacce957bd0962c40b85a0a53124f9a7f4">CY_MQTT_MAX_OUTGOING_SUBSCRIBES</a></div><div class="ttdeci">#define CY_MQTT_MAX_OUTGOING_SUBSCRIBES</div><div class="ttdoc">Configure value of maximum number of outgoing subscription topics maintained in MQTT library until an...</div><div class="ttdef"><b>Definition:</b> cy_mqtt_api.h:213</div></div>
 </div><!-- fragment --></li>
 <li>This MQTT Client library does not support secure connections to the public <code>test.mosquitto.org</code> broker by default. This is because the server uses the SHA1 hashing algorithm. As cautioned by Mbed TLS, SHA-1 is considered a weak message digest and is therefore not enabled in Mbed TLS by default. The use of SHA-1 for certificate signing constitutes a security risk. It is recommended to avoid dependencies on it, and consider stronger message digests instead.</li>
-<li>A set of pre-defined configuration files have been bundled with the wifi-mw-core library for FreeRTOS, lwIP, and Mbed TLS. You should review the configuration and make the required adjustments. See <a href="https://github.com/Infineon/wifi-mw-core/blob/master/README.md">README.md</a> for more details.</li>
-<li>Define the following COMPONENTS in the application's Mkefile for the MQTT Library. For additional information, see <a href="https://github.com/Infineon/wifi-mw-core/blob/master/README.md">README.md</a> <div class="fragment"><div class="line">COMPONENTS=FREERTOS MBEDTLS LWIP SECURE_SOCKETS</div>
+<li>Review and make the required changes to the pre-defined configuration files.<ul>
+<li>The configuration files are bundled with the wifi-mw-core library for FreeRTOS, lwIP, and Mbed TLS. See <a href="https://github.com/Infineon/wifi-mw-core/blob/master/README.md">README.md</a> for more details.</li>
+<li>If the application is using bundle library then the configuration files are in the bundle library. For example if the application is using <em>Wi-Fi core freertos lwip mbedtls bundle library</em>, the configuration files are in <code>wifi-core-freertos-lwip-mbedtls/configs</code> folder. Similarly if the application is using <em>Ethernet Core FreeRTOS lwIP mbedtls library</em>, the configuration files are in <code>ethernet-core-freertos-lwip-mbedtls/configs</code> folder.</li>
+</ul>
+</li>
+<li>Define the following COMPONENTS in the application's Makefile for the MQTT Library. <div class="fragment"><div class="line">COMPONENTS=FREERTOS MBEDTLS LWIP SECURE_SOCKETS</div>
 </div><!-- fragment --></li>
 <li>The "aws-iot-device-sdk-port" layer includes the "coreHTTP" and "coreMQTT" modules of the "aws-iot-device-sdk-embedded-C" library by default. If the user application doesn't use HTTP client features, update the application Makefile to exclude the coreHTTP source files from the build. The Makefile entry should look like the following: <div class="fragment"><div class="line">CY_IGNORE+= $(SEARCH_aws-iot-device-sdk-embedded-C)/libraries/standard/coreHTTP</div>
 <div class="line">CY_IGNORE+= libs/aws-iot-device-sdk-embedded-C/libraries/standard/coreHTTP</div>
@@ -181,7 +184,7 @@ Quick start</h1>
 <li>configEXPECTED_IDLE_TIME_BEFORE_SLEEP value can be changed in the application's FreeRTOSConfig.h</li>
 </ul>
 </li>
-<li>To compile the MQTT library successfully for secure platforms such as CY8CKIT-064S0S2-4343W, the trusted firmware library include path needs to be added before the MBEDTLS library include path in the application Makefile. The Makefile entry should look like the following: <div class="fragment"><div class="line">INCLUDES=$(call CY_MACRO_FINDLIB,trusted-firmware-m)/COMPONENT_TFM_NS_INTERFACE/include</div>
+<li>To compile the MQTT library successfully for secure platforms such as CY8CKIT-064S0S2-4343W, the trusted firmware library include path needs to be added before the MBEDTLS library include path in the application Makefile. The Makefile entry should look like the following: <div class="fragment"><div class="line">INCLUDES=$(SEARCH_trusted-firmware-m)/COMPONENT_TFM_NS_INTERFACE/include</div>
 <div class="line">INCLUDES+=libs/trusted-firmware-m/COMPONENT_TFM_NS_INTERFACE/include</div>
 </div><!-- fragment --></li>
 <li>The MQTT Library disables all the debug log messages by default. To enable log messages, the application must perform the following:<ol type="1">
@@ -200,7 +203,7 @@ Library usage notes</h1>
 Additional information</h1>
 <ul>
 <li><a href="https://github.com/Infineon/mqtt/blob/master/RELEASE.md">MQTT client library RELEASE.md</a> .</li>
-<li><a href="https://www.cypress.com/products/modustoolbox-software-environment">ModusToolbox&trade; software environment, quick start guide, documentation, and videos</a> .</li>
+<li><a href="https://www.infineon.com/cms/en/design-support/tools/sdk/modustoolbox-software">ModusToolbox&trade; software environment, quick start guide, documentation, and videos</a> .</li>
 <li><a href="https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00">AWS-IoT device SDK Library</a> .</li>
 <li><a href="https://github.com/infineon?q=mtb-example-anycloud%20NOT%20Deprecated">ModusToolbox&trade; code examples</a> .</li>
 </ul>

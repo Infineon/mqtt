@@ -1,14 +1,21 @@
-# CYPRESS&trade; MQTT client library
+# MQTT client library
 
 ## What's included?
 
 See the [README.md](./README.md) for a complete description of the MQTT client library.
 
 ## Known issues
-
-- None.
+| Problem | Workaround |
+| ------- | ---------- |
+| IAR 9.30 toolchain throws build errors on Debug mode, if application explicitly includes iar_dlmalloc.h file | Add '--advance-heap' to LDFLAGS in application Makefile. |
 
 ## Changelog
+
+### v3.4.2
+
+- Removed unwanted dependencies from the deps folder
+- Added support for CM0P core
+- Minor Documentation updates
 
 ### v3.4.1
 
@@ -88,10 +95,10 @@ This version of the library was validated for compatibility with the following s
 
 | Software and tools                                             | Version |
 | :---                                                           | :----:  |
-| ModusToolbox&trade; software environment                       | 2.4     |
-| - ModusToolbox&trade; device configurator                      | 3.10    |
-| - ModusToolbox&trade; CAPSENSE&trade; configurator/tuner tools | 4.0     |
-| PSoC&trade; 6 peripheral driver library (PDL)                  | 2.3.0   |
+| ModusToolbox&trade; software environment                       | 3.0     |
+| - ModusToolbox&trade; device configurator                      | 4.0     |
+| - ModusToolbox&trade; CAPSENSE&trade; configurator/tuner tools | 5.0     |
+| PSoC&trade; 6 peripheral driver library (PDL)                  | 3.0.0   |
 | GCC compiler                                                   | 10.3.1  |
-| IAR compiler                                                   | 8.32    |
-| Arm&reg; compiler 6                                            | 6.14    |
+| IAR compiler                                                   | 9.30    |
+| Arm&reg; compiler 6                                            | 6.16    |
