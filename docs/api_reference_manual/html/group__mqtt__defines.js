@@ -8,7 +8,7 @@ var group__mqtt__defines =
     [ "CY_RSLT_MODULE_MQTT_DEINIT_FAIL", "group__mqtt__defines.html#ga1780bbae147be5f9357556499d004be4", null ],
     [ "CY_RSLT_MODULE_MQTT_CREATE_FAIL", "group__mqtt__defines.html#ga060854e20fc06a84e4f5991224c3dc6e", null ],
     [ "CY_RSLT_MODULE_MQTT_DELETE_FAIL", "group__mqtt__defines.html#ga6055d6f4a5ecb44cdd5e8b1ab7276e5b", null ],
-    [ "CY_RSLT_MODULE_MQTT_OBJ_NOT_INITIALIZED", "group__mqtt__defines.html#gaeb26fc6b7ea6b945bfcead259bfb657e", null ],
+    [ "CY_RSLT_MODULE_MQTT_INVALID_HANDLE", "group__mqtt__defines.html#ga8623258e998c680750feee55e9cb61b3", null ],
     [ "CY_RSLT_MODULE_MQTT_CONNECT_FAIL", "group__mqtt__defines.html#ga35bf3a60d03dcdb67b8a7d1a34d04e89", null ],
     [ "CY_RSLT_MODULE_MQTT_DISCONNECT_FAIL", "group__mqtt__defines.html#ga17d9701defa7a206f5009c2dc1b14c2d", null ],
     [ "CY_RSLT_MODULE_MQTT_PUBLISH_FAIL", "group__mqtt__defines.html#ga35b3dae15cf819b309003d85a4d0f1a0", null ],
@@ -20,6 +20,9 @@ var group__mqtt__defines =
     [ "CY_RSLT_MODULE_MQTT_PROTOCOL_NOT_SUPPORTED", "group__mqtt__defines.html#ga6bc561976bd19b7e32a9a9ce31ba41ed", null ],
     [ "CY_RSLT_MODULE_MQTT_INVALID_CREDENTIALS", "group__mqtt__defines.html#ga776346921fe160011df453dca9a94550", null ],
     [ "CY_RSLT_MODULE_MQTT_HANDSHAKE_FAILED", "group__mqtt__defines.html#ga942f5d32db669e7db58068d658e5ca68", null ],
+    [ "CY_RSLT_MODULE_MQTT_HANDLE_NOT_FOUND", "group__mqtt__defines.html#ga1244fc08713b0c35012c3b9b2dbeb864", null ],
+    [ "CY_RSLT_MODULE_MQTT_VCM_ERROR", "group__mqtt__defines.html#gaa9204df02d616c302ced4f6e004c347e", null ],
+    [ "CY_RSLT_MODULE_MQTT_NOT_INITIALIZED", "group__mqtt__defines.html#ga2fac53ccad6a41107796bb1c2c4cfdf9", null ],
     [ "CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE", "group__mqtt__defines.html#ga7f0d2ff66197d6152c70d692d4c87216", null ],
     [ "CY_MQTT_MIN_NETWORK_BUFFER_SIZE", "group__mqtt__defines.html#ga18d0c836b0120b44ea0066d20a741d81", null ],
     [ "CY_MQTT_ACK_RECEIVE_TIMEOUT_MS", "group__mqtt__defines.html#ga7840d8ac595e18a481833643bafdb21b", null ],
@@ -28,5 +31,7 @@ var group__mqtt__defines =
     [ "CY_MQTT_MAX_RETRY_VALUE", "group__mqtt__defines.html#gaa2cdd709ec4d91cb8f8522b606ce82c9", null ],
     [ "CY_MQTT_MAX_HANDLE", "group__mqtt__defines.html#ga2740e7ac82d5f4e6227c31e780cb5eea", null ],
     [ "CY_MQTT_MAX_OUTGOING_PUBLISHES", "group__mqtt__defines.html#gab7e064d14b782a9509cddcb4c909784c", null ],
-    [ "CY_MQTT_MAX_OUTGOING_SUBSCRIBES", "group__mqtt__defines.html#gacce957bd0962c40b85a0a53124f9a7f4", null ]
+    [ "CY_MQTT_MAX_OUTGOING_SUBSCRIBES", "group__mqtt__defines.html#gacce957bd0962c40b85a0a53124f9a7f4", null ],
+    [ "CY_MQTT_DESCP_MAX_LEN", "group__mqtt__defines.html#ga335009dcf9f7b814b3596387af7ea0c2", null ],
+    [ "CY_MQTT_EVENT_THREAD_STACK_SIZE", "group__mqtt__defines.html#ga7b4847a5bffe86eda959c1223e0c84db", null ]
 ];

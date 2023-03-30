@@ -1,5 +1,5 @@
 /*
- * Copyright 2022, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2023, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -106,7 +106,7 @@ extern "C" {
  * In ModusToolbox environment,  PSoC 6 MCU target platform is located in <core_lib/include>.
  *
  * Module base: This base is derived from CY_RSLT_MODULE_MIDDLEWARE_BASE (defined in cy_result.h) and is an offset of CY_RSLT_MODULE_MIDDLEWARE_BASE.
- *              Details of the offset and the middleware base are defined in cy_result_mw.h, which is part of [Github connectivity-utilities] (https://github.com/cypresssemiconductorco/connectivity-utilities).
+ *              Details of the offset and the middleware base are defined in cy_result_mw.h, which is part of [Github connectivity-utilities] (https://github.com/Infineon/connectivity-utilities).
  *
  * Type: This type is defined in cy_result.h and can be one of CY_RSLT_TYPE_FATAL, CY_RSLT_TYPE_ERROR, CY_RSLT_TYPE_WARNING, or CY_RSLT_TYPE_INFO. MQTT library error codes are of type CY_RSLT_TYPE_ERROR which is 0x2.
  *
@@ -137,8 +137,8 @@ extern "C" {
 #define CY_RSLT_MODULE_MQTT_CREATE_FAIL                            ( CY_RSLT_MQTT_ERR_BASE + 6 )
 /** MQTT library Delete failure. */
 #define CY_RSLT_MODULE_MQTT_DELETE_FAIL                            ( CY_RSLT_MQTT_ERR_BASE + 7 )
-/** MQTT object not initialized failure. */
-#define CY_RSLT_MODULE_MQTT_OBJ_NOT_INITIALIZED                    ( CY_RSLT_MQTT_ERR_BASE + 8 )
+/** Invalid MQTT handle. */
+#define CY_RSLT_MODULE_MQTT_INVALID_HANDLE                         ( CY_RSLT_MQTT_ERR_BASE + 8 )
 /** MQTT library Connect failure. */
 #define CY_RSLT_MODULE_MQTT_CONNECT_FAIL                           ( CY_RSLT_MQTT_ERR_BASE + 9 )
 /** MQTT library Disconnect failure. */
@@ -161,6 +161,12 @@ extern "C" {
 #define CY_RSLT_MODULE_MQTT_INVALID_CREDENTIALS                    ( CY_RSLT_MQTT_ERR_BASE + 18 )
 /** TLS handshake failed. */
 #define CY_RSLT_MODULE_MQTT_HANDSHAKE_FAILED                       ( CY_RSLT_MQTT_ERR_BASE + 19 )
+/** MQTT library handle not found. */
+#define CY_RSLT_MODULE_MQTT_HANDLE_NOT_FOUND                       ( CY_RSLT_MQTT_ERR_BASE + 20 )
+/** MQTT virtual API failure due to VCM error. */
+#define CY_RSLT_MODULE_MQTT_VCM_ERROR                              ( CY_RSLT_MQTT_ERR_BASE + 21 )
+/** MQTT library not initialized. */
+#define CY_RSLT_MODULE_MQTT_NOT_INITIALIZED                        ( CY_RSLT_MQTT_ERR_BASE + 22 )
 
 /**
  * MQTT event type for subscribed message receive event.
@@ -172,7 +178,7 @@ extern "C" {
 /**
  * Minimum network buffer size in bytes, for sending and receiving an MQTT packet.
  *
- * \note 
+ * \note
  *    This is the default value configured in the library. This value can be modified to suit the application use case requirements.
  *
  */
@@ -240,6 +246,23 @@ extern "C" {
  */
 #ifndef CY_MQTT_MAX_OUTGOING_SUBSCRIBES
 #define CY_MQTT_MAX_OUTGOING_SUBSCRIBES          ( 5U )
+#endif
+
+/**
+ * Maximum length of descriptor supported.
+ */
+#define CY_MQTT_DESCP_MAX_LEN                    ( 20 )
+
+/**
+ * Stack size for MQTT Event processing thread.
+ */
+#ifndef CY_MQTT_EVENT_THREAD_STACK_SIZE
+    #ifdef ENABLE_MQTT_LOGS
+        /* Additional 3kb of stack is added for enabling the prints */
+        #define CY_MQTT_EVENT_THREAD_STACK_SIZE     ( (1024 * 3) + (1024 * 3) )
+    #else
+        #define CY_MQTT_EVENT_THREAD_STACK_SIZE     ( 1024 * 3 )
+    #endif
 #endif
 /**
  * @}
@@ -434,6 +457,9 @@ typedef void ( *cy_mqtt_callback_t )( cy_mqtt_t mqtt_handle, cy_mqtt_event_t eve
  * Performs network sockets initialization required for the MQTT library.
  * <b>It must be called once (and only once) before calling any other function in this library.</b>
  *
+ * This API is supported in multi-core environment and must be invoked on the secondary core application
+ * before calling any other virtual MQTT APIs.
+ *
  * \note \ref cy_mqtt_init and \ref cy_mqtt_deinit API functions are not thread-safe. The caller
  *       must ensure that these two API functions are not invoked simultaneously from different threads.
  *
@@ -442,23 +468,24 @@ typedef void ( *cy_mqtt_callback_t )( cy_mqtt_t mqtt_handle, cy_mqtt_event_t eve
 cy_rslt_t cy_mqtt_init( void );
 
 /**
- * Creates a MQTT instance and initializes its members based on the supplied arguments.
+ * Creates an MQTT instance and initializes its members based on the supplied arguments.
  * Initializes the core AWS MQTT library and its components.
  * The handle to the MQTT instance is returned via the handle pointer supplied by the user on success.
  * This handle is used for creating MQTT connection with MQTT broker.
  * Same handle is used for MQTT Publish, Subscribe, and Unsubscribing from MQTT topic.
+ * Note: To receive notification of events like availability of data for subscribed topic, or
+ *       network disconnection, use \ref cy_mqtt_register_event_callback.
  *
  * @param buffer [in]         : Network buffer for send and receive.
  *                              Application needs to allocate memory for network buffer and should not be freed until MQTT object is deleted.
- *                              The minimum buffer size is defined by \ref CY_MQTT_MIN_NETWORK_BUFFER_SIZE. Please make sure the buffer allocated is larger than \ref CY_MQTT_MIN_NETWORK_BUFFER_SIZE. 
- *                              This buffer is used for sending and receiving MQTT packets over the network. Hence, the buffer size should be sufficiently large enough to hold the MQTT packet header and payload. 
+ *                              The minimum buffer size is defined by \ref CY_MQTT_MIN_NETWORK_BUFFER_SIZE. Please make sure the buffer allocated is larger than \ref CY_MQTT_MIN_NETWORK_BUFFER_SIZE.
+ *                              This buffer is used for sending and receiving MQTT packets over the network. Hence, the buffer size should be sufficiently large enough to hold the MQTT packet header and payload.
  *                              For example: To send/receive the MQTT payload of 4 kb, it's recommended to allocate 4.5 kb or more buffer.
  * @param buff_len [in]       : Network buffer length in bytes.
  * @param security [in]       : Credentials for TLS connection.
  *                              Application needs to allocate memory for keys, certs, and sni/user names should not be freed until MQTT object is deleted.
  * @param broker_info [in]    : MQTT broker information. Refer \ref cy_mqtt_broker_info_t for details.
- * @param event_callback [in] : Application callback function which needs to be called on arrival of MQTT incoming publish packets and network disconnection notification from network layer.
- * @param user_data [in]      : Pointer to user data to be passed in the event callback.
+ * @param descriptor          : A string that describes the MQTT handle that is being created in order to uniquely identify it.
  * @param mqtt_handle [out]   : Pointer to store the MQTT handle allocated by this function on successful return.
  *
  * @return cy_rslt_t          : CY_RSLT_SUCCESS on success; error codes in @ref mqtt_defines otherwise.
@@ -466,8 +493,7 @@ cy_rslt_t cy_mqtt_init( void );
 cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t buff_len,
                           cy_awsport_ssl_credentials_t *security,
                           cy_mqtt_broker_info_t *broker_info,
-                          cy_mqtt_callback_t event_callback,
-                          void *user_data,
+                          char *descriptor,
                           cy_mqtt_t *mqtt_handle );
 
 /**
@@ -481,7 +507,22 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t buff_len,
 cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connect_info );
 
 /**
+ * Gets the MQTT handle associated with a user defined descriptor passed in \ref cy_mqtt_create.
+ *
+ * This API is supported in multi-core environment and can be invoked from the secondary core application.
+ *
+ * @param mqtt_handle [out]  : Pointer to store the MQTT handle that corresponds to the descriptor.
+ * @param descriptor [in]    : NULL terminated string that uniquely identifies the MQTT handle.
+                               Note: The maximum permissible length of the string is 20 characters (excluding the null character).
+ *
+ * @return cy_rslt_t         : CY_RSLT_SUCCESS on success; error codes in @ref mqtt_defines otherwise.
+ */
+cy_rslt_t cy_mqtt_get_handle( cy_mqtt_t *mqtt_handle, char *descriptor );
+
+/**
  * Publishes the MQTT message on given MQTT topic.
+ *
+ * This API is supported in multi-core environment and can be invoked from the secondary core application.
  *
  * @param mqtt_handle [in]   : MQTT handle created using \ref cy_mqtt_create.
  * @param pub_msg [in]       : MQTT publish message information. Refer \ref cy_mqtt_publish_info_t for details.
@@ -493,11 +534,14 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pub_ms
 /**
  * Subscribes for MQTT message on the given MQTT topic or list of topics.
  *
- * \note 
- *       Single subscription request with multiple topics, this function returns success if at least one of the subscription is successful. 
- *       If subscription fails for any of the topic in the list, the failure is indicated through 'allocated_qos' set to \ref CY_MQTT_QOS_INVALID. 
- *       Refer \ref cy_mqtt_subscribe_info_t for more details. Upon return, the 'allocated_qos' indicate the QoS level allocated by the MQTT broker for the successfully subscribed topic.
+ * This API is supported in multi-core environment and can be invoked from the secondary core application.
  *
+ * \note
+ *       1. Single subscription request with multiple topics, this function returns success if at least one of the subscription is successful.
+ *          If subscription fails for any of the topic in the list, the failure is indicated through 'allocated_qos' set to \ref CY_MQTT_QOS_INVALID.
+ *          Refer \ref cy_mqtt_subscribe_info_t for more details. Upon return, the 'allocated_qos' indicate the QoS level allocated by the MQTT broker for the successfully subscribed topic.
+ *       2. Call \ref cy_mqtt_register_event_callback before calling this API in order to be notified of
+ *          data available for the subscribed topic(s).
  * @param mqtt_handle [in]   : MQTT handle created using \ref cy_mqtt_create.
  * @param sub_info [in, out] : Pointer to array of MQTT subscription information structure. Refer \ref cy_mqtt_subscribe_info_t for details.
  * @param sub_count [in]     : Number of subscription topics in the subscription array.
@@ -507,7 +551,37 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pub_ms
 cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *sub_info, uint8_t sub_count );
 
 /**
+ * Registers an event callback for the given MQTT handle.
+ *
+ * This API is supported in multi-core environment and can be invoked as a virtual API from the secondary core application.
+ *
+ * @param mqtt_handle [in]    : MQTT handle created using \ref cy_mqtt_create.
+ * @param event_callback [in] : Application callback function which needs to be called on arrival of MQTT incoming publish packets and network disconnection notification from network layer.
+ * @param user_data [in]      : Pointer to user data to be passed in the event callback.
+ *
+ * @return cy_rslt_t          : CY_RSLT_SUCCESS on success; error codes in @ref mqtt_defines otherwise.
+ */
+cy_rslt_t cy_mqtt_register_event_callback( cy_mqtt_t mqtt_handle,
+                                           cy_mqtt_callback_t event_callback,
+                                           void *user_data );
+
+/**
+ * Deregisters an event callback for the given MQTT handle which was previously registered using \ref cy_mqtt_register_event_callback API.
+ *
+ * This API is supported in multi-core environment and can be invoked as a virtual API from the secondary core application.
+ *
+ * @param mqtt_handle [in]    : MQTT handle created using \ref cy_mqtt_create.
+ * @param event_callback [in] : Callback function which needs to be deregistered.
+ *
+ * @return cy_rslt_t          : CY_RSLT_SUCCESS on success; error codes in @ref mqtt_defines otherwise.
+ */
+cy_rslt_t cy_mqtt_deregister_event_callback( cy_mqtt_t mqtt_handle,
+                                             cy_mqtt_callback_t event_callback);
+
+/**
  * Unsubscribes from a given MQTT topic.
+ *
+ * This API is supported in multi-core environment and can be invoked as a virtual API from the secondary core application.
  *
  * @param mqtt_handle [in]   : MQTT handle created using \ref cy_mqtt_create.
  * @param unsub_info [in]    : Pointer to array of MQTT unsubscription information structure. Refer \ref cy_mqtt_unsubscribe_info_t for details.
@@ -539,6 +613,10 @@ cy_rslt_t cy_mqtt_delete( cy_mqtt_t mqtt_handle );
 /**
  * One-time deinitialization function for network sockets implementation.
  * It should be called after destroying all network socket connections.
+ *
+ * This API is supported in multi-core environment and can be invoked on the secondary core application
+ * to clean up the MQTT virtual-only stack implementation. It should be called when the MQTT virtual
+ * APIs are no longer needed.
  *
  * \note \ref cy_mqtt_init and \ref cy_mqtt_deinit API functions are not thread-safe. The caller
  *       must ensure that these two API functions are not invoked simultaneously from different threads.

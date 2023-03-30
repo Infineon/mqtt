@@ -1,5 +1,5 @@
 /*
- * Copyright 2022, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2023, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -38,9 +38,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "cy_mqtt_api.h"
-#include "cy_utils.h"
 #include "cyabs_rtos.h"
-
 /******************************************************
  *                      Macros
  ******************************************************/
@@ -49,6 +47,556 @@
 #else
 #define cy_mqtt_log_msg(a,b,c,...)
 #endif
+
+#if defined(ENABLE_MULTICORE_CONN_MW) && defined(USE_VIRTUAL_API)
+
+#include "cy_mqtt_api_internal.h"
+#include "cy_vcm_internal.h"
+#include "cyhal_ipc.h"
+
+typedef struct mqtt_cb_data_base
+{
+    cy_mqtt_t            mqtt_handle;
+    cy_mqtt_callback_t   mqtt_usr_cb;
+    void*                mqtt_usr_data;
+} mqtt_cb_data_base_t;
+
+static mqtt_cb_data_base_t  mqtt_handle_cb_database[ CY_MQTT_MAX_HANDLE ]; /* Database to store mapping of mqtt handle and the registered user callback and data for it. */
+static int mqtt_handle_index = 0;                                          /* Next available index in the database to store callback info for a handle. */
+static cy_mutex_t cb_database_mutex;                                       /* Mutex to provide thread-safe access to the callback databse. */
+static bool is_mqtt_virtual_library_initialized = false;                   /* Indicates whether the MQTT library is initialized or not in the secondary core. */
+
+
+static void virtual_event_handler(void *arg)
+{
+    cy_rslt_t res;
+    cy_mqtt_callback_params_t  *mqtt_event_params;
+    cy_mqtt_t mqtt_handle;
+    int i = 0;
+
+    mqtt_event_params = (cy_mqtt_callback_params_t *)arg;
+    mqtt_handle = mqtt_event_params->mqtt_handle;
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n virtual_event_handler - Acquiring Mutex %p ", cb_database_mutex );
+    res = cy_rtos_get_mutex( &cb_database_mutex, CY_RTOS_NEVER_TIMEOUT );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+        /* Freeing the memory allocated in local_mqtt_event_cb function in VCM */
+        free((char*)mqtt_event_params->event.data.pub_msg.received_message.payload);
+        free((char*)mqtt_event_params->event.data.pub_msg.received_message.topic);
+        return;
+    }
+
+    for( i = 0; i < CY_MQTT_MAX_HANDLE; i++ )
+    {
+        if( mqtt_handle_cb_database[i].mqtt_handle == mqtt_handle )
+        {
+            cy_mqtt_callback_t evt_cb = mqtt_handle_cb_database[i].mqtt_usr_cb;
+            if( evt_cb != NULL )
+            {
+                evt_cb(mqtt_event_params->mqtt_handle, mqtt_event_params->event, mqtt_handle_cb_database[i].mqtt_usr_data);
+                break;
+            }
+        }
+    }
+
+    /* Freeing the memory allocated in local_mqtt_event_cb function in VCM */
+    free((char*)mqtt_event_params->event.data.pub_msg.received_message.payload);
+    free((char*)mqtt_event_params->event.data.pub_msg.received_message.topic);
+
+    res = cy_rtos_set_mutex( &cb_database_mutex );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n virtual_event_handler - Releasing Mutex %p ", cb_database_mutex );
+}
+
+/* This section is virtual-only implementation.
+ * The below APIs send the API request to the other core via IPC using the Virtual Connectivity Manager (VCM) library.
+ */
+
+cy_rslt_t cy_mqtt_init( void )
+{
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+    int i = 0;
+
+    if ( is_mqtt_virtual_library_initialized == true )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT library is already initialized. \n", res );
+        return res;
+    }
+
+    res = cy_rtos_init_mutex2(&cb_database_mutex, false);
+    if ( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Failed to initialize mutex. Res: 0x%x\n", res );
+        return res;
+    }
+
+    for ( i = 0; i < CY_MQTT_MAX_HANDLE; i++ )
+    {
+        (void)memset(&mqtt_handle_cb_database[i], 0x00, sizeof(mqtt_cb_data_base_t));
+    }
+
+    mqtt_handle_index = 0;
+    is_mqtt_virtual_library_initialized = true;
+
+    return res;
+}
+
+cy_rslt_t cy_mqtt_get_handle( cy_mqtt_t *mqtt_handle, char *descriptor )
+{
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+    cy_rslt_t *api_res = NULL;
+
+    cy_vcm_request_t api_req;
+    cy_vcm_response_t api_resp;
+    CY_SECTION_SHAREDMEM
+    static cy_mqtt_get_handle_params_t params;
+    CY_SECTION_SHAREDMEM
+    static cy_mqtt_t _handle;
+
+    if( mqtt_handle == NULL || descriptor == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_get_handle()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    if( strlen(descriptor) > CY_MQTT_DESCP_MAX_LEN )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Descriptor length is greater than maximum permissible length: %u!\n", (uint16_t)CY_MQTT_DESCP_MAX_LEN );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    if ( is_mqtt_virtual_library_initialized == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT library is not initialized on secondary core. Call cy_mqtt_init() first. \n", res );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
+    params.mqtt_handle = &(_handle);
+    memcpy( &params.descriptor, descriptor, strlen(descriptor) + 1 );
+
+    /* Set API request */
+    memset(&api_req, 0, sizeof(cy_vcm_request_t));
+    api_req.api_id = CY_VCM_API_MQTT_GET_HANDLE;
+    api_req.params = &params;
+
+    /* Send API request */
+    res = cy_vcm_send_api_request(&api_req, &api_resp);
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_vcm_send_api_request failed for cy_mqtt_get_handle. Res: %u \n", res);
+        *mqtt_handle = NULL;
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    /* Get API result */
+    api_res = (cy_rslt_t*)(api_resp.result);
+    if( api_res == NULL )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_mqtt_get_handle API response is NULL! \n");
+        *mqtt_handle = NULL;
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    *mqtt_handle = _handle;
+    return *api_res;
+}
+
+cy_rslt_t cy_mqtt_register_event_callback( cy_mqtt_t mqtt_handle,
+                                           cy_mqtt_callback_t event_callback,
+                                           void *user_data )
+{
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+    cy_rslt_t *api_res = NULL;
+    int i = 0;
+    bool handle_found = false;
+
+    cy_vcm_request_t api_req;
+    cy_vcm_response_t api_resp;
+    CY_SECTION_SHAREDMEM
+    static cy_mqtt_register_event_callback_params_t params;
+
+    if( mqtt_handle == NULL || event_callback == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_register_event_callback()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    if ( is_mqtt_virtual_library_initialized == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT library is not initialized on secondary core. Call cy_mqtt_init() first. \n", res );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_register_event_callback - Acquiring Mutex %p ", cb_database_mutex );
+    res = cy_rtos_get_mutex( &cb_database_mutex, CY_RTOS_NEVER_TIMEOUT );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+        return res;
+    }
+
+    if( mqtt_handle_index == (CY_MQTT_MAX_HANDLE) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nExceeded maximum number of MQTT handles!\n" );
+        cy_rtos_set_mutex( &cb_database_mutex );
+        return CY_RSLT_MODULE_MQTT_NOMEM;
+    }
+
+    /*Look for the MQTT handle. If already present, replace the previously registered callback. */
+    for( i = 0; i < mqtt_handle_index; i++ )
+    {
+        if( mqtt_handle_cb_database[i].mqtt_handle == mqtt_handle )
+        {
+            mqtt_handle_cb_database[i].mqtt_usr_cb = event_callback;
+            mqtt_handle_cb_database[i].mqtt_usr_data = user_data;
+
+            handle_found = true;
+            break;
+        }
+    }
+
+    /* If MQTT handle is not found in the callback database, add a new entry for this handle. */
+    if( handle_found == false )
+    {
+        mqtt_handle_cb_database[mqtt_handle_index].mqtt_handle = mqtt_handle;
+        mqtt_handle_cb_database[mqtt_handle_index].mqtt_usr_cb = event_callback;
+        mqtt_handle_cb_database[mqtt_handle_index].mqtt_usr_data = user_data;
+
+        mqtt_handle_index++;
+    }
+
+    res = cy_rtos_set_mutex( &cb_database_mutex );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_register_event_callback - Releasing Mutex %p ", cb_database_mutex );
+
+    if( handle_found == true )
+    {
+        return CY_RSLT_SUCCESS;
+    }
+
+    params.mqtt_handle = mqtt_handle;
+    params.event_callback = virtual_event_handler;
+    params.user_data = user_data;
+
+    /* Set API request */
+    memset(&api_req, 0, sizeof(cy_vcm_request_t));
+    api_req.api_id = CY_VCM_API_MQTT_REG_EVENT_CB;
+    api_req.params = &params;
+
+    /* Send API request */
+    res = cy_vcm_send_api_request(&api_req, &api_resp);
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_vcm_send_api_request failed for cy_mqtt_register_event_callback. Res: %u \n", res);
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    /* Get API result */
+    api_res = (cy_rslt_t*)(api_resp.result);
+    if( api_res == NULL )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_mqtt_register_event_callback API response is NULL! \n");
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    return *api_res;
+}
+
+cy_rslt_t cy_mqtt_deregister_event_callback( cy_mqtt_t mqtt_handle,
+                                             cy_mqtt_callback_t event_callback)
+{
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+    cy_rslt_t *api_res = NULL;
+    int i, j;
+    bool cb_found = false;
+
+    cy_vcm_request_t api_req;
+    cy_vcm_response_t api_resp;
+    CY_SECTION_SHAREDMEM
+    static cy_mqtt_deregister_event_callback_params_t params;
+
+    if( mqtt_handle == NULL || event_callback == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_deregister_event_callback()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    if ( is_mqtt_virtual_library_initialized == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT library is not initialized on secondary core. Call cy_mqtt_init() first. \n", res );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
+    if( mqtt_handle_index == 0 )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n No callback registered!\n" );
+        cy_rtos_set_mutex( &cb_database_mutex );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_deregister_event_callback - Acquiring Mutex %p ", cb_database_mutex );
+    res = cy_rtos_get_mutex( &cb_database_mutex, CY_RTOS_NEVER_TIMEOUT );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+        return res;
+    }
+
+    /*Look for the MQTT handle. */
+    for( i = 0; i < mqtt_handle_index; i++ )
+    {
+        if( mqtt_handle_cb_database[i].mqtt_handle == mqtt_handle && mqtt_handle_cb_database[i].mqtt_usr_cb == event_callback )
+        {
+            /* If callback is found, move the entries after it by 1 to the left. */
+            for( j = i+1; j < mqtt_handle_index; j++ )
+            {
+                mqtt_handle_cb_database[j-1].mqtt_usr_cb = mqtt_handle_cb_database[j].mqtt_usr_cb;
+                mqtt_handle_cb_database[j-1].mqtt_usr_data = mqtt_handle_cb_database[j].mqtt_usr_data;
+                mqtt_handle_cb_database[j-1].mqtt_handle = mqtt_handle_cb_database[j].mqtt_handle ;
+            }
+            /* Set last entry to NULL. */
+            mqtt_handle_cb_database[mqtt_handle_index].mqtt_usr_cb = NULL;
+            mqtt_handle_cb_database[mqtt_handle_index].mqtt_usr_data = NULL;
+            mqtt_handle_cb_database[mqtt_handle_index].mqtt_handle = NULL;
+
+            mqtt_handle_index -= 1;
+            cb_found = true;
+            break;
+        }
+    }
+
+    res = cy_rtos_set_mutex( &cb_database_mutex );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_register_event_callback - Releasing Mutex %p ", cb_database_mutex );
+
+    /* If callback is not found in the callback database, return error. */
+    if( cb_found == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_deregister_event_callback(). Callback not found for handle: %p!\n", mqtt_handle );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    params.mqtt_handle = mqtt_handle;
+    params.event_callback = virtual_event_handler;
+
+    /* Set API request */
+    memset(&api_req, 0, sizeof(cy_vcm_request_t));
+    api_req.api_id = CY_VCM_API_MQTT_DEREG_EVENT_CB;
+    api_req.params = &params;
+
+    /* Send API request */
+    res = cy_vcm_send_api_request(&api_req, &api_resp);
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_vcm_send_api_request failed for cy_mqtt_register_event_callback. Res: %u \n", res);
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    /* Get API result */
+    api_res = (cy_rslt_t*)(api_resp.result);
+    if( api_res == NULL )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_mqtt_register_event_callback API response is NULL! \n");
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    return *api_res;
+}
+
+cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg )
+{
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+    cy_rslt_t *api_res = NULL;
+    cy_vcm_request_t api_req;
+    cy_vcm_response_t api_resp;
+    CY_SECTION_SHAREDMEM
+    static cy_mqtt_publish_params_t params;
+    CY_SECTION_SHAREDMEM
+    static cy_mqtt_publish_info_t _pubmsg;
+
+    if( (mqtt_handle == NULL) || (pubmsg == NULL) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_publish()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    if ( is_mqtt_virtual_library_initialized == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT library is not initialized on secondary core. Call cy_mqtt_init() first. \n", res );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
+    memcpy(&(_pubmsg), pubmsg, sizeof(cy_mqtt_publish_info_t));
+    params.mqtt_handle = mqtt_handle;
+    params.pub_msg = &(_pubmsg);
+
+    /* Set API request */
+    memset(&api_req, 0, sizeof(cy_vcm_request_t));
+    api_req.api_id = CY_VCM_API_MQTT_PUBLISH;
+    api_req.params = &params;
+
+    /* Send API request */
+    res = cy_vcm_send_api_request(&api_req, &api_resp);
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_vcm_send_api_request failed for cy_mqtt_publish. Res: %u \n", res);
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    /* Get API result */
+    api_res = (cy_rslt_t*)(api_resp.result);
+    if( api_res == NULL )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_mqtt_publish API response is NULL! \n");
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    return *api_res;
+}
+
+cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *sub_info, uint8_t sub_count  )
+{
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+    cy_rslt_t *api_res = NULL;
+    cy_vcm_request_t api_req;
+    cy_vcm_response_t api_resp;
+    CY_SECTION_SHAREDMEM
+    static cy_mqtt_subscribe_params_t params;
+    CY_SECTION_SHAREDMEM
+    static cy_mqtt_subscribe_info_t _sub_info;
+
+    if( (mqtt_handle == NULL) || (sub_info == NULL) || (sub_count < 1) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_subscribe()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    if ( is_mqtt_virtual_library_initialized == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT library is not initialized on secondary core. Call cy_mqtt_init() first. \n", res );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
+    memcpy(&(_sub_info), sub_info, sizeof(cy_mqtt_subscribe_info_t));
+    params.mqtt_handle = mqtt_handle;
+    params.sub_info = &_sub_info;
+    params.sub_count = sub_count;
+
+    /* Set API request */
+    memset(&api_req, 0, sizeof(cy_vcm_request_t));
+    api_req.api_id = CY_VCM_API_MQTT_SUBSCRIBE;
+    api_req.params = &params;
+
+    /* Send API request */
+    res = cy_vcm_send_api_request(&api_req, &api_resp);
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_vcm_send_api_request failed for cy_mqtt_subscribe. Res: %u \n", res);
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    /* Get API result */
+    api_res = (cy_rslt_t*)(api_resp.result);
+    if( api_res == NULL )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_mqtt_subscribe API response is NULL! \n");
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    return *api_res;
+}
+
+cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t *unsub_info, uint8_t unsub_count )
+{
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+    cy_rslt_t *api_res = NULL;
+    cy_vcm_request_t api_req;
+    cy_vcm_response_t api_resp;
+    CY_SECTION_SHAREDMEM
+    static cy_mqtt_unsubscribe_params_t params;
+    CY_SECTION_SHAREDMEM
+    static cy_mqtt_unsubscribe_info_t _unsub_info;
+
+    if( (mqtt_handle == NULL) || (unsub_info == NULL) || (unsub_count < 1) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_unsubscribe()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    if ( is_mqtt_virtual_library_initialized == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT library is not initialized on secondary core. Call cy_mqtt_init() first. \n", res );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
+    memcpy(&(_unsub_info), unsub_info, sizeof(cy_mqtt_unsubscribe_info_t));
+
+    params.mqtt_handle = mqtt_handle;
+    params.unsub_info = &(_unsub_info);
+    params.unsub_count = unsub_count;
+
+    /* Set API request */
+    memset(&api_req, 0, sizeof(cy_vcm_request_t));
+    api_req.api_id = CY_VCM_API_MQTT_UNSUBSCRIBE;
+    api_req.params = &params;
+
+    /* Send API request */
+    res = cy_vcm_send_api_request(&api_req, &api_resp);
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_vcm_send_api_request failed for cy_mqtt_unsubscribe. Res: %u \n", res);
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    /* Get API result */
+    api_res = (cy_rslt_t*)(api_resp.result);
+    if( api_res == NULL )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_mqtt_unsubscribe API response is NULL! \n");
+        return CY_RSLT_MODULE_MQTT_VCM_ERROR;
+    }
+
+    return *api_res;
+}
+
+cy_rslt_t cy_mqtt_deinit( void )
+{
+    cy_rslt_t res = CY_RSLT_SUCCESS;
+
+    if ( is_mqtt_virtual_library_initialized == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT library is not initialized on secondary core. Call cy_mqtt_init() first. \n", res );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
+    res = cy_rtos_deinit_mutex( &cb_database_mutex );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_deinit_mutex failed with Error : [0x%X] ", (unsigned int)res );
+        return res;
+    }
+
+    is_mqtt_virtual_library_initialized = false;
+
+    return res;
+}
+
+#elif !defined(ENABLE_MULTICORE_CONN_MW) || (defined(ENABLE_MULTICORE_CONN_MW) && !defined(USE_VIRTUAL_API))
+/* This section is full-stack implementation. */
+
+#include "cy_utils.h"
+
 
 /**
  * Timeout for receiving CONNACK packet in milliseconds.
@@ -74,17 +622,12 @@
 
 #define CY_MQTT_EVENT_QUEUE_SIZE                             ( 30U )
 
-#ifdef ENABLE_MQTT_LOGS
-    #define CY_MQTT_EVENT_THREAD_STACK_SIZE                  ( (1024 * 2) + (1024 * 3) ) /* Additional 3kb of stack is added for enabling the prints */
-#else
-    #define CY_MQTT_EVENT_THREAD_STACK_SIZE                  ( 1024 * 2 )
-#endif
-
 #define CY_MQTT_EVENT_QUEUE_TIMEOUT_IN_MSEC                  ( 500UL )
 
 #define CY_MQTT_MAGIC_HEADER                                 ( 0xbdefacbd )
 #define CY_MQTT_MAGIC_FOOTER                                 ( 0xefbcdbfd )
 
+#define CY_MQTT_MAX_EVENT_CALLBACKS                          (2)
 /******************************************************
  *                    Constants
  ******************************************************/
@@ -146,7 +689,7 @@ typedef struct mqtt_object
     MQTTContext_t                   mqtt_context;              /**< MQTT context. */
     cy_awsport_server_info_t        server_info;               /**< MQTT broker info. */
     cy_awsport_ssl_credentials_t    security;                  /**< MQTT secure connection credentials. */
-    cy_mqtt_callback_t              mqtt_event_cb;             /**< MQTT application callback for events. */
+    cy_mqtt_callback_t              mqtt_event_cb[ CY_MQTT_MAX_EVENT_CALLBACKS]; /**< MQTT application callback for events. */
     MQTTSubAckStatus_t              sub_ack_status[ CY_MQTT_MAX_OUTGOING_SUBSCRIBES ]; /**< MQTT SUBSCRIBE command ACK status. */
     uint8_t                         num_of_subs_in_req;        /**< Number of subscription messages in outstanding MQTT subscribe request. */
     bool                            unsub_ack_received;        /**< Status of unsubscribe acknowledgment. */
@@ -155,9 +698,10 @@ typedef struct mqtt_object
     cy_mqtt_pubpack_t               outgoing_pub_packets[ CY_MQTT_MAX_OUTGOING_PUBLISHES ]; /**< MQTT PUBLISH packet. */
     cy_mutex_t                      process_mutex;             /**< Mutex for synchronizing MQTT object members. */
     cy_timer_t                      mqtt_timer;                /**< RTOS timer to handle the MQTT ping request */
-    void                            *user_data;                /**< User data which needs to be sent while calling registered app callback. */
+    void                            *user_data[ CY_MQTT_MAX_EVENT_CALLBACKS ];                /**< User data which needs to be sent while calling registered app callback. */
     uint16_t                        keepAliveSeconds;          /**< MQTT keep alive timeout in seconds. */
     uint32_t                        mqtt_magic_footer;         /**< Magic footer to verify the mqtt object */
+    char                            mqtt_descriptor[ CY_MQTT_DESCP_MAX_LEN + 1 ]; /**< Descriptor used by the application to identify the mqtt handle. */
 } cy_mqtt_object_t ;
 
 /*
@@ -192,8 +736,7 @@ static cy_mutex_t        mqtt_db_mutex;
 static bool              mqtt_lib_init_status = false;
 static bool              mqtt_db_mutex_init_status = false;
 static cy_thread_t       mqtt_event_process_thread = NULL;
-static cy_queue_t        mqtt_event_queue = NULL;
-
+static cy_queue_t        mqtt_event_queue;
 /******************************************************
  *               Function Definitions
  ******************************************************/
@@ -245,7 +788,7 @@ static cy_rslt_t start_timer( cy_mqtt_object_t *mqtt_obj )
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
     uint8_t   retry_count = 0;
-    
+
     if( mqtt_obj == NULL )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to start_timer \n" );
@@ -520,7 +1063,7 @@ static void mqtt_awsport_network_disconnect_callback( void *arg )
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid argument for mqtt_awsport_network_disconnect_callback, so nothing to do..!\n" );
         return;
     }
-    
+
     mqtt_obj = ( cy_mqtt_object_t * )arg;
 
     event.socket_event = CY_MQTT_SOCKET_EVENT_DISCONNECT;
@@ -538,6 +1081,22 @@ static void mqtt_awsport_network_disconnect_callback( void *arg )
 }
 
 /*----------------------------------------------------------------------------------------------------------*/
+
+static void call_registered_event_callbacks(cy_mqtt_t handle, cy_mqtt_event_t event)
+{
+    int i = 0;
+    cy_mqtt_object_t *mqtt_obj = ( cy_mqtt_object_t * )handle;
+    cy_mqtt_callback_t event_cb;
+
+    for ( i = 0; i < CY_MQTT_MAX_EVENT_CALLBACKS; i++ )
+    {
+        if( mqtt_obj->mqtt_event_cb[i] != NULL )
+        {
+            event_cb = mqtt_obj->mqtt_event_cb[i];
+            event_cb( handle, event, mqtt_obj->user_data[i] );
+        }
+    }
+}
 
 static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
                                  MQTTPacketInfo_t *param_packet_info,
@@ -605,10 +1164,8 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
             event.data.pub_msg.received_message.retain = param_deserialized_info->pPublishInfo->retain;
             event.data.pub_msg.received_message.topic = param_deserialized_info->pPublishInfo->pTopicName;
             event.data.pub_msg.received_message.topic_len = param_deserialized_info->pPublishInfo->topicNameLength;
-            if( mqtt_obj->mqtt_event_cb != NULL )
-            {
-                mqtt_obj->mqtt_event_cb( handle, event, mqtt_obj->user_data );
-            }
+
+            call_registered_event_callbacks(handle, event);
         }
         else
         {
@@ -663,10 +1220,9 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
                     memset( &event, 0x00, sizeof(cy_mqtt_event_t) );
                     event.type = CY_MQTT_EVENT_TYPE_DISCONNECT;
                     event.data.reason = CY_MQTT_DISCONN_TYPE_BROKER_DOWN;
-                    if( mqtt_obj->mqtt_event_cb != NULL )
-                    {
-                        mqtt_obj->mqtt_event_cb( handle, event, mqtt_obj->user_data );
-                    }
+
+                    call_registered_event_callbacks(handle, event);
+
                     mqtt_obj->mqtt_session_established = false;
                 }
                 cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nPing response received." );
@@ -873,12 +1429,7 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
 
         if( socket_event.socket_event == CY_MQTT_SOCKET_EVENT_EXIT_THREAD )
         {
-            result = cy_rtos_exit_thread();
-            if( result != CY_RSLT_SUCCESS )
-            {
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_exit_thread failed with Error :[0x%X]\n", (unsigned int)result );
-                break;
-            }
+            break;
         }
 
         memset( &event, 0x00, sizeof( cy_mqtt_event_t ) );
@@ -970,11 +1521,9 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
                                 event.data.reason = CY_MQTT_DISCONN_TYPE_BAD_RESPONSE;
                             }
 
-                            /* Call registered application callback */
-                            if( mqtt_obj->mqtt_event_cb != NULL )
-                            {
-                                mqtt_obj->mqtt_event_cb( (cy_mqtt_t)mqtt_obj, event, mqtt_obj->user_data );
-                            }
+                            /* Call registered application callbacks */
+                            call_registered_event_callbacks((cy_mqtt_t)mqtt_obj, event);
+
                             mqtt_obj->mqtt_session_established = false;
                         }
                     }
@@ -1030,10 +1579,9 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
                 if( mqtt_obj->mqtt_session_established == true )
                 {
                     event.data.reason = CY_MQTT_DISCONN_TYPE_NETWORK_DOWN;
-                    if( mqtt_obj->mqtt_event_cb != NULL )
-                    {
-                        mqtt_obj->mqtt_event_cb( (cy_mqtt_t)mqtt_obj, event, mqtt_obj->user_data );
-                    }
+
+                    call_registered_event_callbacks((cy_mqtt_t)mqtt_obj, event);
+
                     mqtt_obj->mqtt_session_established = false;
                 }
 
@@ -1082,10 +1630,9 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
                         if( mqtt_obj->mqtt_session_established == true )
                         {
                             event.data.reason = CY_MQTT_DISCONN_TYPE_NETWORK_DOWN;
-                            if( mqtt_obj->mqtt_event_cb != NULL )
-                            {
-                                mqtt_obj->mqtt_event_cb( (cy_mqtt_t)mqtt_obj, event, mqtt_obj->user_data );
-                            }
+
+                            call_registered_event_callbacks((cy_mqtt_t)mqtt_obj, event);
+
                             mqtt_obj->mqtt_session_established = false;
                         }
                         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Releasing Mutex %p ", mqtt_obj->process_mutex );
@@ -1128,6 +1675,11 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
             cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
         }
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p ", mqtt_db_mutex );
+    }
+    result = cy_rtos_exit_thread();
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_exit_thread failed with Error :[0x%X]\n", (unsigned int)result );
     }
 }
 
@@ -1200,7 +1752,7 @@ cy_rslt_t cy_mqtt_init( void )
     }
 
     result = cy_rtos_create_thread( &mqtt_event_process_thread, mqtt_event_processing_thread, "MQTTEventProcessingThread", NULL,
-                                    CY_MQTT_EVENT_THREAD_STACK_SIZE, CY_MQTT_EVENT_THREAD_PRIORITY, NULL );
+                                    CY_MQTT_EVENT_THREAD_STACK_SIZE, CY_MQTT_EVENT_THREAD_PRIORITY, 0 );
     if( result != CY_RSLT_SUCCESS )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_create_thread failed with Error : [0x%X] ", (unsigned int)result );
@@ -1222,8 +1774,7 @@ cy_rslt_t cy_mqtt_init( void )
 cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
                           cy_awsport_ssl_credentials_t *security,
                           cy_mqtt_broker_info_t *broker_info,
-                          cy_mqtt_callback_t event_callback,
-                          void *user_data,
+                          char *descriptor,
                           cy_mqtt_t *mqtt_handle )
 {
     cy_rslt_t         result = CY_RSLT_SUCCESS;
@@ -1231,8 +1782,9 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
     uint8_t           slot_index;
     bool              slot_found;
     bool              process_mutex_init_status = false;
+    cy_mqtt_t         handle;
 
-    if( (broker_info == NULL) || (mqtt_handle == NULL) || (event_callback == NULL) )
+    if( (broker_info == NULL) || (mqtt_handle == NULL) )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_create()..!\n" );
         return CY_RSLT_MODULE_MQTT_BADARG;
@@ -1250,10 +1802,22 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
+    if( descriptor == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid descriptor..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    if( strlen(descriptor) > CY_MQTT_DESCP_MAX_LEN )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Descriptor length is greater than maximum permissible length: %u!\n", (uint16_t)CY_MQTT_DESCP_MAX_LEN );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
     if( (mqtt_lib_init_status == false) || (mqtt_db_mutex_init_status == false) )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nLibrary init is not done/Global mutex is not initialized..!\n " );
-        return CY_RSLT_MODULE_MQTT_CREATE_FAIL;
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
     }
 
     result = cy_rtos_get_mutex( &mqtt_db_mutex, CY_RTOS_NEVER_TIMEOUT );
@@ -1278,6 +1842,13 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
         return result;
     }
     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_create - Released Mutex %p ", mqtt_db_mutex );
+
+    result = cy_mqtt_get_handle( &handle, descriptor );
+    if( result == CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nDescriptor is not unique. " );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
 
     mqtt_obj = (cy_mqtt_object_t *)malloc( sizeof( cy_mqtt_object_t ) );
     if( mqtt_obj == NULL )
@@ -1319,13 +1890,6 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
 
     mqtt_obj->server_info.host_name = broker_info->hostname;
     mqtt_obj->server_info.port = broker_info->port;
-    mqtt_obj->mqtt_event_cb = event_callback;
-    mqtt_obj->user_data = user_data;
-
-    if( user_data == NULL )
-    {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nArgument user_data is NULL..!\n" );
-    }
 
     result = cy_rtos_init_mutex2( &(mqtt_obj->process_mutex), false );
     if( result != CY_RSLT_SUCCESS )
@@ -1396,6 +1960,7 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
         }
         goto exit;
     }
+    memcpy(mqtt_obj->mqtt_descriptor, descriptor, strlen(descriptor)+1);
 
     mqtt_obj->mqtt_magic_header = CY_MQTT_MAGIC_HEADER;
     mqtt_obj->mqtt_magic_footer = CY_MQTT_MAGIC_FOOTER;
@@ -1452,12 +2017,18 @@ cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connec
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
+    if( (mqtt_lib_init_status == false) || (mqtt_db_mutex_init_status == false) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nLibrary init is not done/Global mutex is not initialized..!\n " );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
     mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
 
     if( is_mqtt_obj_valid( mqtt_obj ) == false )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT object..!\n" );
-        return CY_RSLT_MODULE_MQTT_OBJ_NOT_INITIALIZED;
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT handle..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
     }
 
     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_connect - Acquiring Mutex %p ", mqtt_obj->process_mutex );
@@ -1599,7 +2170,7 @@ cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connec
 
     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nTLS connection established ..\n" );
 
-    create_clean_session = (connect_details.cleanSession == true ) ? false : true;
+    create_clean_session = (connect_details.cleanSession == true ) ? true : false;
     if( create_clean_session == true )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nCreating clean session ..\n" );
@@ -1729,12 +2300,18 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
+    if( (mqtt_lib_init_status == false) || (mqtt_db_mutex_init_status == false) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nLibrary init is not done/Global mutex is not initialized..!\n " );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
     mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
 
     if( is_mqtt_obj_valid( mqtt_obj ) == false )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT object..!\n" );
-        return CY_RSLT_MODULE_MQTT_OBJ_NOT_INITIALIZED;
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT handle..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
     }
 
     if( mqtt_obj->mqtt_session_established == false )
@@ -1903,12 +2480,18 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
+    if( (mqtt_lib_init_status == false) || (mqtt_db_mutex_init_status == false) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nLibrary init is not done/Global mutex is not initialized..!\n " );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
     mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
 
     if( is_mqtt_obj_valid( mqtt_obj ) == false )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT object..!\n" );
-        return CY_RSLT_MODULE_MQTT_OBJ_NOT_INITIALIZED;
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT handle..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
     }
 
     if( mqtt_obj->mqtt_session_established == false )
@@ -2121,12 +2704,18 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
+    if( (mqtt_lib_init_status == false) || (mqtt_db_mutex_init_status == false) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nLibrary init is not done/Global mutex is not initialized..!\n " );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
     mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
 
     if( is_mqtt_obj_valid( mqtt_obj ) == false )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT object..!\n" );
-        return CY_RSLT_MODULE_MQTT_OBJ_NOT_INITIALIZED;
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT handle..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
     }
 
     if( mqtt_obj->mqtt_session_established == false )
@@ -2291,12 +2880,18 @@ cy_rslt_t cy_mqtt_disconnect( cy_mqtt_t mqtt_handle )
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
+    if( (mqtt_lib_init_status == false) || (mqtt_db_mutex_init_status == false) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nLibrary init is not done/Global mutex is not initialized..!\n " );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
     mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
 
     if( is_mqtt_obj_valid( mqtt_obj ) == false )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT object..!\n" );
-        return CY_RSLT_MODULE_MQTT_OBJ_NOT_INITIALIZED;
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT handle..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
     }
 
     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Acquiring Mutex %p ", mqtt_obj->process_mutex );
@@ -2392,12 +2987,18 @@ cy_rslt_t cy_mqtt_delete( cy_mqtt_t mqtt_handle )
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
+    if( (mqtt_lib_init_status == false) || (mqtt_db_mutex_init_status == false) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nLibrary init is not done/Global mutex is not initialized..!\n " );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
     mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
 
     if( is_mqtt_obj_valid( mqtt_obj ) == false )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT object..!\n" );
-        return CY_RSLT_MODULE_MQTT_OBJ_NOT_INITIALIZED;
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT handle..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
     }
 
     result = cy_rtos_get_mutex( &mqtt_db_mutex, CY_RTOS_NEVER_TIMEOUT );
@@ -2482,7 +3083,7 @@ cy_rslt_t cy_mqtt_deinit( void )
     if( (mqtt_lib_init_status == false) || (mqtt_db_mutex_init_status == false) )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nLibrary init is not done/Global mutex is not initialized..!\n " );
-        return CY_RSLT_MODULE_MQTT_DEINIT_FAIL;
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
     }
 
     if( mqtt_handle_count != 0 )
@@ -2549,3 +3150,197 @@ cy_rslt_t cy_mqtt_deinit( void )
 }
 
 /*----------------------------------------------------------------------------------------------------------*/
+
+cy_rslt_t cy_mqtt_register_event_callback( cy_mqtt_t mqtt_handle,
+                                           cy_mqtt_callback_t event_callback,
+                                           void *user_data )
+{
+    cy_rslt_t         result    = CY_RSLT_SUCCESS;
+    cy_mqtt_object_t  *mqtt_obj = NULL;
+    int i = 0;
+
+    if( mqtt_handle == NULL || event_callback == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_register_event_callback()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    if( user_data == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nArgument user_data is NULL..!\n" );
+    }
+
+    if( (mqtt_lib_init_status == false) || (mqtt_db_mutex_init_status == false) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nLibrary init is not done/Global mutex is not initialized..!\n " );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
+    mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
+
+    if( is_mqtt_obj_valid( mqtt_obj ) == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT handle..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
+    }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        return result;
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Acquired Mutex %p ", mqtt_obj->process_mutex );
+
+    for ( i = 0; i < CY_MQTT_MAX_EVENT_CALLBACKS; i++ )
+    {
+        if ( mqtt_obj->mqtt_event_cb[i] == NULL )
+        {
+            mqtt_obj->mqtt_event_cb[i] = event_callback;
+            mqtt_obj->user_data[i] = user_data;
+            break;
+        }
+    }
+    if( i == CY_MQTT_MAX_EVENT_CALLBACKS )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Maximum number of callbacks already registered! \r\n");
+        (void)cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
+        return CY_RSLT_MODULE_MQTT_NOMEM;
+    }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Releasing Mutex %p ", mqtt_obj->process_mutex );
+    result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+        return result;
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Released Mutex %p ", mqtt_obj->process_mutex );
+
+    return CY_RSLT_SUCCESS;
+}
+
+/*----------------------------------------------------------------------------------------------------------*/
+
+cy_rslt_t cy_mqtt_deregister_event_callback( cy_mqtt_t mqtt_handle,
+                                             cy_mqtt_callback_t event_callback)
+{
+    cy_rslt_t         result    = CY_RSLT_SUCCESS;
+    cy_mqtt_object_t  *mqtt_obj = NULL;
+    int i = 0;
+
+    if( mqtt_handle == NULL || event_callback == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_deregister_event_callback()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    if( (mqtt_lib_init_status == false) || (mqtt_db_mutex_init_status == false) )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nLibrary init is not done/Global mutex is not initialized..!\n " );
+        return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
+    }
+
+    mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
+
+    if( is_mqtt_obj_valid( mqtt_obj ) == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT handle..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
+    }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        return result;
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Acquired Mutex %p ", mqtt_obj->process_mutex );
+
+    for ( i = 0; i < CY_MQTT_MAX_EVENT_CALLBACKS; i++ )
+    {
+        if ( mqtt_obj->mqtt_event_cb[i] == event_callback )
+        {
+            mqtt_obj->mqtt_event_cb[i] = NULL;
+            mqtt_obj->user_data[i] = NULL;
+            break;
+        }
+    }
+    if( i == CY_MQTT_MAX_EVENT_CALLBACKS )
+    {
+        cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Event callback not found! \r\n");
+        (void)cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
+        return CY_RSLT_MODULE_MQTT_NOMEM;
+    }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Releasing Mutex %p ", mqtt_obj->process_mutex );
+    result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+        return result;
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Released Mutex %p ", mqtt_obj->process_mutex );
+
+    return CY_RSLT_SUCCESS;
+}
+
+/*----------------------------------------------------------------------------------------------------------*/
+
+cy_rslt_t cy_mqtt_get_handle( cy_mqtt_t *mqtt_handle, char *descriptor )
+{
+    cy_rslt_t result;
+    int handle_index = 0;
+    bool handle_found = false;
+    cy_mqtt_object_t  *mqtt_obj = NULL;
+
+    if( mqtt_handle == NULL || descriptor == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_get_handle()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    result = cy_rtos_get_mutex( &mqtt_db_mutex, CY_RTOS_NEVER_TIMEOUT );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+        return result;
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_get_handle - Acquired Mutex %p ", mqtt_db_mutex );
+
+    while( handle_index < mqtt_handle_count )
+    {
+        mqtt_obj = (cy_mqtt_object_t*)mqtt_handle_database[handle_index].mqtt_handle;
+        if( mqtt_obj != NULL )
+        {
+            if( strcmp(mqtt_obj->mqtt_descriptor, descriptor) == 0 )
+            {
+                *mqtt_handle = (void*)mqtt_obj;
+                handle_found = true;
+                break;
+            }
+        }
+        handle_index++;
+    }
+
+    if( handle_found == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT handle for descriptor: %s not found..!\n", descriptor );
+        (void)cy_rtos_set_mutex( &mqtt_db_mutex );
+        return CY_RSLT_MODULE_MQTT_HANDLE_NOT_FOUND;
+    }
+
+    result = cy_rtos_set_mutex( &mqtt_db_mutex );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+        return result;
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_get_handle - Released Mutex %p ", mqtt_db_mutex );
+
+    return CY_RSLT_SUCCESS;
+}
+
+#endif

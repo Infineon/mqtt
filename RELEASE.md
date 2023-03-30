@@ -4,34 +4,56 @@
 
 See the [README.md](./README.md) for a complete description of the MQTT client library.
 
+
 ## Known issues
+
 | Problem | Workaround |
 | ------- | ---------- |
-| IAR 9.30 toolchain throws build errors on Debug mode, if application explicitly includes iar_dlmalloc.h file | Add '--advance-heap' to LDFLAGS in application Makefile. |
+| IAR 9.30 toolchain throws build errors on Debug mode if the application explicitly includes the *iar_dlmalloc.h* file | Add `--advance-heap` to LDFLAGS in the application Makefile. |
 
 ## Changelog
+
+### v4.0.0
+
+- Updated FreeRTOS-specific code to make it generic
+- Added new APIs and updated signature of some of the old APIs to support multicore virtualization
+- Enabled multi-core, virtual API support for the following MQTT APIs:
+   - `cy_mqtt_get_handle`
+   - `cy_mqtt_register_event_callback`
+   - `cy_mqtt_deregister_event_callback`
+   - `cy_mqtt_publish`
+   - `cy_mqtt_subscribe`
+   - `cy_mqtt_unsubscribe`
+- Updated documentation
+
+This version of the library is not backward-compatible with pervious library versions.
+
 
 ### v3.4.2
 
 - Removed unwanted dependencies from the deps folder
 - Added support for CM0P core
-- Minor Documentation updates
+- Minor documentation updates
+
 
 ### v3.4.1
 
-- Documentation update
+- Documentation updates
+
 
 ### v3.4.0
 
 - Added support for CY8CEVAL-062S2-MUR-43439M2 kit
 
+
 ### v3.3.0
 
 - Added support for CYW943907AEVAL1F and CYW954907AEVAL1F kits
 
+
 ### v3.2.0
 
-- Added support for secured kit (for example: CY8CKIT-064S0S2-4343W)
+- Added support for secured kits (for example: CY8CKIT-064S0S2-4343W)
 
 - Integrated with secure sockets PKCS support
 
@@ -45,9 +67,9 @@ See the [README.md](./README.md) for a complete description of the MQTT client l
 ### v3.1.1
 - Documentation updates
 
-- Upgraded the library to integrate the with wifi-mw-core 3.x library version for AnyCloud
+- Upgraded the library to integrate the with wifi-mw-core 3.x library version for any cloud
 
-- Introduced ARMC6 compiler support for AnyCloud build
+- Introduced ARMC6 compiler support for any cloud build
 
 
 ### v3.1.0
@@ -76,7 +98,7 @@ See the [README.md](./README.md) for a complete description of the MQTT client l
 
 ### v2.0.0
 
-- Changes to adapt to ModusToolbox&trade; 2.2.0 flow and AnyCloud's support for multiple Wi-Fi interfaces - STA, softAP, and concurrent STA+softAP mode
+- Changes to adapt to ModusToolbox&trade; 2.2.0 flow and any cloud's support for multiple Wi-Fi interfaces - STA, softAP, and concurrent STA+softAP mode
 
 
 ### v1.0.1

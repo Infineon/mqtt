@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('group__mqtt__defines.html',''); initRe
 
 See the macro section of this document for library-specific error codes.
 </pre><p >The data structure cy_rslt_t is part of cy_result.h. In Mbed OS, the PSoC 6 MCU target platform is located in &lt;mbed-os/targets/TARGET_Cypress/TARGET_PSOC6/psoc6csp/core_lib/include&gt;. In ModusToolbox environment, PSoC 6 MCU target platform is located in &lt;core_lib/include&gt;.</p>
-<p >Module base: This base is derived from CY_RSLT_MODULE_MIDDLEWARE_BASE (defined in cy_result.h) and is an offset of CY_RSLT_MODULE_MIDDLEWARE_BASE. Details of the offset and the middleware base are defined in cy_result_mw.h, which is part of <a href="https://github.com/cypresssemiconductorco/connectivity-utilities">Github connectivity-utilities</a>.</p>
+<p >Module base: This base is derived from CY_RSLT_MODULE_MIDDLEWARE_BASE (defined in cy_result.h) and is an offset of CY_RSLT_MODULE_MIDDLEWARE_BASE. Details of the offset and the middleware base are defined in cy_result_mw.h, which is part of <a href="https://github.com/Infineon/connectivity-utilities">Github connectivity-utilities</a>.</p>
 <p >Type: This type is defined in cy_result.h and can be one of CY_RSLT_TYPE_FATAL, CY_RSLT_TYPE_ERROR, CY_RSLT_TYPE_WARNING, or CY_RSLT_TYPE_INFO. MQTT library error codes are of type CY_RSLT_TYPE_ERROR which is 0x2.</p>
 <p >Library-specific error codes: These error codes are library-specific and defined in the macro section.</p>
 <p >Helper macros used for creating library-specific results are provided as part of cy_result.h.</p>
@@ -144,10 +144,10 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_RSLT_MODULE_MQTT_DELETE_FAIL</b>&#160;&#160;&#160;( <a class="el" href="group__mqtt__defines.html#ga6466ed92857c93aa0aca275c3d5c65c2">CY_RSLT_MQTT_ERR_BASE</a> + 7 )</td></tr>
 <tr class="memdesc:ga6055d6f4a5ecb44cdd5e8b1ab7276e5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT library Delete failure. <br /></td></tr>
 <tr class="separator:ga6055d6f4a5ecb44cdd5e8b1ab7276e5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaeb26fc6b7ea6b945bfcead259bfb657e"><td class="memItemLeft" align="right" valign="top"><a id="gaeb26fc6b7ea6b945bfcead259bfb657e" name="gaeb26fc6b7ea6b945bfcead259bfb657e"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_RSLT_MODULE_MQTT_OBJ_NOT_INITIALIZED</b>&#160;&#160;&#160;( <a class="el" href="group__mqtt__defines.html#ga6466ed92857c93aa0aca275c3d5c65c2">CY_RSLT_MQTT_ERR_BASE</a> + 8 )</td></tr>
-<tr class="memdesc:gaeb26fc6b7ea6b945bfcead259bfb657e"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT object not initialized failure. <br /></td></tr>
-<tr class="separator:gaeb26fc6b7ea6b945bfcead259bfb657e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8623258e998c680750feee55e9cb61b3"><td class="memItemLeft" align="right" valign="top"><a id="ga8623258e998c680750feee55e9cb61b3" name="ga8623258e998c680750feee55e9cb61b3"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_RSLT_MODULE_MQTT_INVALID_HANDLE</b>&#160;&#160;&#160;( <a class="el" href="group__mqtt__defines.html#ga6466ed92857c93aa0aca275c3d5c65c2">CY_RSLT_MQTT_ERR_BASE</a> + 8 )</td></tr>
+<tr class="memdesc:ga8623258e998c680750feee55e9cb61b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Invalid MQTT handle. <br /></td></tr>
+<tr class="separator:ga8623258e998c680750feee55e9cb61b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga35bf3a60d03dcdb67b8a7d1a34d04e89"><td class="memItemLeft" align="right" valign="top"><a id="ga35bf3a60d03dcdb67b8a7d1a34d04e89" name="ga35bf3a60d03dcdb67b8a7d1a34d04e89"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_RSLT_MODULE_MQTT_CONNECT_FAIL</b>&#160;&#160;&#160;( <a class="el" href="group__mqtt__defines.html#ga6466ed92857c93aa0aca275c3d5c65c2">CY_RSLT_MQTT_ERR_BASE</a> + 9 )</td></tr>
 <tr class="memdesc:ga35bf3a60d03dcdb67b8a7d1a34d04e89"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT library Connect failure. <br /></td></tr>
@@ -192,6 +192,18 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_RSLT_MODULE_MQTT_HANDSHAKE_FAILED</b>&#160;&#160;&#160;( <a class="el" href="group__mqtt__defines.html#ga6466ed92857c93aa0aca275c3d5c65c2">CY_RSLT_MQTT_ERR_BASE</a> + 19 )</td></tr>
 <tr class="memdesc:ga942f5d32db669e7db58068d658e5ca68"><td class="mdescLeft">&#160;</td><td class="mdescRight">TLS handshake failed. <br /></td></tr>
 <tr class="separator:ga942f5d32db669e7db58068d658e5ca68"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1244fc08713b0c35012c3b9b2dbeb864"><td class="memItemLeft" align="right" valign="top"><a id="ga1244fc08713b0c35012c3b9b2dbeb864" name="ga1244fc08713b0c35012c3b9b2dbeb864"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_RSLT_MODULE_MQTT_HANDLE_NOT_FOUND</b>&#160;&#160;&#160;( <a class="el" href="group__mqtt__defines.html#ga6466ed92857c93aa0aca275c3d5c65c2">CY_RSLT_MQTT_ERR_BASE</a> + 20 )</td></tr>
+<tr class="memdesc:ga1244fc08713b0c35012c3b9b2dbeb864"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT library handle not found. <br /></td></tr>
+<tr class="separator:ga1244fc08713b0c35012c3b9b2dbeb864"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa9204df02d616c302ced4f6e004c347e"><td class="memItemLeft" align="right" valign="top"><a id="gaa9204df02d616c302ced4f6e004c347e" name="gaa9204df02d616c302ced4f6e004c347e"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_RSLT_MODULE_MQTT_VCM_ERROR</b>&#160;&#160;&#160;( <a class="el" href="group__mqtt__defines.html#ga6466ed92857c93aa0aca275c3d5c65c2">CY_RSLT_MQTT_ERR_BASE</a> + 21 )</td></tr>
+<tr class="memdesc:gaa9204df02d616c302ced4f6e004c347e"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT virtual API failure due to VCM error. <br /></td></tr>
+<tr class="separator:gaa9204df02d616c302ced4f6e004c347e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga2fac53ccad6a41107796bb1c2c4cfdf9"><td class="memItemLeft" align="right" valign="top"><a id="ga2fac53ccad6a41107796bb1c2c4cfdf9" name="ga2fac53ccad6a41107796bb1c2c4cfdf9"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_RSLT_MODULE_MQTT_NOT_INITIALIZED</b>&#160;&#160;&#160;( <a class="el" href="group__mqtt__defines.html#ga6466ed92857c93aa0aca275c3d5c65c2">CY_RSLT_MQTT_ERR_BASE</a> + 22 )</td></tr>
+<tr class="memdesc:ga2fac53ccad6a41107796bb1c2c4cfdf9"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT library not initialized. <br /></td></tr>
+<tr class="separator:ga2fac53ccad6a41107796bb1c2c4cfdf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7f0d2ff66197d6152c70d692d4c87216"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mqtt__defines.html#ga7f0d2ff66197d6152c70d692d4c87216">CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE</a>&#160;&#160;&#160;<a class="el" href="group__mqtt__struct.html#gga1cefedb516ade340c9a829ec7b998fbaac017ae74a362a60128e4bc0482a085de">CY_MQTT_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECEIVE</a></td></tr>
 <tr class="memdesc:ga7f0d2ff66197d6152c70d692d4c87216"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT event type for subscribed message receive event.  <a href="group__mqtt__defines.html#ga7f0d2ff66197d6152c70d692d4c87216">More...</a><br /></td></tr>
 <tr class="separator:ga7f0d2ff66197d6152c70d692d4c87216"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -222,6 +234,14 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_MQTT_MAX_OUTGOING_SUBSCRIBES</b>&#160;&#160;&#160;( 5U )</td></tr>
 <tr class="memdesc:gacce957bd0962c40b85a0a53124f9a7f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configure value of maximum number of outgoing subscription topics maintained in MQTT library until an ack is received from the broker. <br /></td></tr>
 <tr class="separator:gacce957bd0962c40b85a0a53124f9a7f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga335009dcf9f7b814b3596387af7ea0c2"><td class="memItemLeft" align="right" valign="top"><a id="ga335009dcf9f7b814b3596387af7ea0c2" name="ga335009dcf9f7b814b3596387af7ea0c2"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_MQTT_DESCP_MAX_LEN</b>&#160;&#160;&#160;( 20 )</td></tr>
+<tr class="memdesc:ga335009dcf9f7b814b3596387af7ea0c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum length of descriptor supported. <br /></td></tr>
+<tr class="separator:ga335009dcf9f7b814b3596387af7ea0c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7b4847a5bffe86eda959c1223e0c84db"><td class="memItemLeft" align="right" valign="top"><a id="ga7b4847a5bffe86eda959c1223e0c84db" name="ga7b4847a5bffe86eda959c1223e0c84db"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>CY_MQTT_EVENT_THREAD_STACK_SIZE</b>&#160;&#160;&#160;( 1024 * 3 )</td></tr>
+<tr class="memdesc:ga7b4847a5bffe86eda959c1223e0c84db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stack size for MQTT Event processing thread. <br /></td></tr>
+<tr class="separator:ga7b4847a5bffe86eda959c1223e0c84db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="ga7f0d2ff66197d6152c70d692d4c87216" name="ga7f0d2ff66197d6152c70d692d4c87216"></a>
