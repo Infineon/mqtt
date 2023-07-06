@@ -4,7 +4,7 @@ This repo contains the MQTT client library that can work with the family of Infi
 
 The ModusToolbox&trade; MQTT client code examples download this library automatically, so you don't need to.
 
-Existing MQTT application users who are using MQTT 3.X can use the [porting guide](https://infineon.github.io/mqtt/porting_guide.md) to migrate to MQTT v4.0.
+Existing MQTT application users who are using MQTT 3.X can use the [porting guide]( https://github.com/Infineon/mqtt/blob/master/porting_guide.md ) to migrate to MQTT v4.0.
 
 ## Multi-core architecture and virtual API support
 
@@ -12,13 +12,15 @@ The library supports multi-core architecture by making a subset of APIs availabl
 
 The virtual APIs pipe the API requests over IPC to the primary core where the API is actually executed and the result is passed back to the secondary core. This virtualization abstracts out the implementation details and complexity of IPC, thus making multi-core connectivity application development simple.
 
-For more information on virtualization, see the [Virtual Connectivity Manager](https://github.com/Infineon/virtual-connectivity-manager) library.
+For more information on virtualization, see the [Virtual Connectivity Manager]( https://github.com/Infineon/virtual-connectivity-manager ) library.
 
 ## Features
 
-All features supported by the [AWS IoT device SDK MQTT library](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00) are supported by this library.
+All features supported by the [AWS IoT device SDK MQTT library]( https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00 ) are supported by this library.
 
 Some of the key features include:
+
+- Supports Wi-Fi and Ethernet connections
 
 - MQTT 3.1.1 client
 
@@ -51,21 +53,23 @@ Some of the key features include:
 
 ## Supported platforms
 
-- [PSoC&trade; 6 Wi-Fi Bluetooth&reg; prototyping kit  (CY8CPROTO-062-4343W)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8cproto-062-4343w/)
+- [PSoC&trade; 6 Wi-Fi Bluetooth&reg; prototyping kit  (CY8CPROTO-062-4343W)]( https://www.infineon.com/cms/en/product/evaluation-boards/cy8cproto-062-4343w/ )
 
-- [PSoC&trade; 62S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062S2-43012)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-062s2-43012/)
+- [PSoC&trade; 62S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062S2-43012)]( https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-062s2-43012/ )
 
-- [PSoC&trade; 6 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062-WiFi-BT)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-062-wifi-bt/)
+- [PSoC&trade; 6 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-062-WiFi-BT)]( https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-062-wifi-bt/ )
 
-- [PSoC&trade; 64S0S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-064S0S2-4343W)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-064s0s2-4343w/)
+- [PSoC&trade; 64S0S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-064S0S2-4343W)]( https://www.infineon.com/cms/en/product/evaluation-boards/cy8ckit-064s0s2-4343w/ )
 
-- [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-LAI-4373M2)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/)
+- [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-LAI-4373M2)]( https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/ )
 
-- [CYW954907AEVAL1F evaluation kit (CYW954907AEVAL1F)](https://www.infineon.com/cms/en/product/evaluation-boards/cyw954907aeval1f/)
+- [CYW954907AEVAL1F evaluation kit (CYW954907AEVAL1F)]( https://www.infineon.com/cms/en/product/evaluation-boards/cyw954907aeval1f/ )
 
-- [CYW943907AEVAL1F Evaluation Kit (CYW943907AEVAL1F)](https://www.infineon.com/cms/en/product/evaluation-boards/cyw943907aeval1f/)
+- [CYW943907AEVAL1F Evaluation Kit (CYW943907AEVAL1F)]( https://www.infineon.com/cms/en/product/evaluation-boards/cyw943907aeval1f/ )
 
-- [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-MUR-43439M2)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/)
+- [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-MUR-43439M2)]( https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/ )
+
+- [XMC7200D-E272K8384 kit (KIT-XMC72-EVK)](https://www.infineon.com/KIT_XMC72_EVK)
 
 **Note:** Virtual APIs are supported on all PSoC 62 devices, but they have only been tested on the CY8CEVAL-062S2-MUR-43439M2 kit.
 
@@ -73,21 +77,35 @@ Some of the key features include:
 
 This MQTT client library depends on the following libraries. These libraries are included by default.
 
-- [AWS IoT device SDK port](https://github.com/Infineon/aws-iot-device-sdk-port)
+- [AWS IoT device SDK port]( https://github.com/Infineon/aws-iot-device-sdk-port )
 
-- [AWS IoT device SDK MQTT library](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00)
+- [AWS IoT device SDK MQTT library]( https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00 )
 
-If virtual APIs are to be used, it additionally depends on the [Virtual Connectivity Manager](https://github.com/Infineon/virtual-connectivity-manager) library.
+If virtual APIs are to be used, it additionally depends on the [Virtual Connectivity Manager]( https://github.com/Infineon/virtual-connectivity-manager ) library.
 
 ## Quick start
 
-1. Ensure that the application includes *./include/cy_mqtt_api.h* to use the library APIs and structure.
+1. To use mqtt library with Wi-Fi kits on FreeRTOS, lwIP, and Mbed TLS combination, the application should pull [mqtt]( https://github.com/Infineon/mqtt ) library and [wifi-core-freertos-lwip-mbedtls]( https://github.com/Infineon/wifi-core-freertos-lwip-mbedtls ) library which will internally pull secure-sockets, wifi-connection-manager, FreeRTOS, lwIP, Mbed TLS and other dependent modules.
+To pull wifi-core-freertos-lwip-mbedtls and mqtt libraries create the following *.mtb* files in deps folder.
+   - *wifi-core-freertos-lwip-mbedtls.mtb:*
+      `https://github.com/Infineon/wifi-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/wifi-core-freertos-lwip-mbedtls/latest-v1.X`
+   - *mqtt.mtb:*
+      `https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X`
 
-2. The referenced file *./include/core_mqtt_config.h* that is bundled with this library provides the default configurations required for the [AWS IoT device SDK](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00) library.
+2. To use mqtt library with Ethernet kits on FreeRTOS, lwIP, and Mbed TLS combination, the application should pull [mqtt]( https://github.com/Infineon/mqtt ) library and [ethernet-core-freertos-lwip-mbedtls]( https://github.com/Infineon/ethernet-core-freertos-lwip-mbedtls ) library which will internally pull secure-sockets, ethernet-connection-manager, FreeRTOS, lwIP, Mbed TLS and other dependent modules.
+To pull ethernet-core-freertos-lwip-mbedtls and mqtt libraries create the following *.mtb* files in deps folder.
+   - *ethernet-core-freertos-lwip-mbedtls.mtb:*
+      `https://github.com/Infineon/ethernet-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/ethernet-core-freertos-lwip-mbedtls/latest-v1.X`
+   - *mqtt.mtb:*
+      `https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X`
 
-3. By default, [AWS IoT device SDK](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00) library logging is turned off. To enable log messages, map the logging-related macros `LogError`, `LogWarn`, `LogInfo`, and `LogDebug` in *./include/core_mqtt_config.h* to the application-specific logging implementation.
+3. Ensure that the application includes *./include/cy_mqtt_api.h* to use the library APIs and structure.
 
-4. Define the following macros in the application Makefile with values to suit the use case and network conditions:
+4. The referenced file *./include/core_mqtt_config.h* that is bundled with this library provides the default configurations required for the [AWS IoT device SDK](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00) library.
+
+5. By default, [AWS IoT device SDK](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00) library logging is turned off. To enable log messages, map the logging-related macros `LogError`, `LogWarn`, `LogInfo`, and `LogDebug` in *./include/core_mqtt_config.h* to the application-specific logging implementation.
+
+6. Define the following macros in the application Makefile with values to suit the use case and network conditions:
 
    Macro | Description | Example
    ------|-------------|-------
@@ -104,35 +122,34 @@ If virtual APIs are to be used, it additionally depends on the [Virtual Connecti
 
 **Note:** It is important to note that having the `MQTT_RECV_POLLING_TIMEOUT_MS` timeout as too short will result in MQTT being disconnected due to the possibility of partial data being received. If you have small TCP buffers and a high-latency network, the optimum value for the timeout can be surprisingly long. In such cases, the optimum value for timeout can be better determined based on experimenting the MQTT applications with payloads bigger than the TCP buffer. See [AWS coreMQTT documentation](https://docs.aws.amazon.com/embedded-csdk/202103.00/lib-ref/libraries/standard/coreMQTT/docs/doxygen/output/html/mqtt_timeouts.html#mqtt_timeouts_receive_polling) for more details.<br>
 
-5. Review and make the required changes to the pre-defined configuration files.
+7. Review and make the required changes to the pre-defined configuration files.
 
-   The configuration files are bundled with the wifi-mw-core library for FreeRTOS, lwIP, and Mbed TLS. See [README.md](https://github.com/Infineon/wifi-mw-core/blob/master/README.md) for details.
+   The configuration files are bundled with the wifi-mw-core library for FreeRTOS, lwIP, and Mbed TLS. See [README.md]( https://github.com/Infineon/wifi-mw-core/blob/master/README.md ) for details.
 
    If the application uses the bundle library, the configuration files are in the bundle library. For example, if the application uses the **Wi-Fi core freertos lwip mbedtls bundle library**, the configuration files are in the *wifi-core-freertos-lwip-mbedtls/configs* folder. Similarly, if the application uses the **Ethernet Core FreeRTOS lwIP mbedtls library**, the configuration files are in the *ethernet-core-freertos-lwip-mbedtls/configs* folder.
 
-6. Define the following COMPONENTS in the application's Makefile for the Azure port library.
+8. Define the following COMPONENTS in the application's Makefile for the Azure port library.
     ```
     COMPONENTS=FREERTOS MBEDTLS LWIP SECURE_SOCKETS
     ```
 
-7. The 'aws-iot-device-sdk-port' layer includes the 'coreHTTP' and 'coreMQTT' modules of the 'aws-iot-device-sdk-embedded-C' library by default. If the user application does not use HTTP client features, update the application Makefile to exclude the coreHTTP source files from the build. The Makefile entry should look like as follows:
+9. The 'aws-iot-device-sdk-port' layer includes the 'coreHTTP' and 'coreMQTT' modules of the 'aws-iot-device-sdk-embedded-C' library by default. If the user application does not use HTTP client features, update the application Makefile to exclude the coreHTTP source files from the build. The Makefile entry should look like as follows:
     ```
     CY_IGNORE+= $(SEARCH_aws-iot-device-sdk-embedded-C)/libraries/standard/coreHTTP
-    CY_IGNORE+= libs/aws-iot-device-sdk-embedded-C/libraries/standard/coreHTTP
     ```
 
-8. For a secured platform like CY8CKIT-064S0S2-4343W, define the following macros in the application Makefile:
+10. For a secured platform like CY8CKIT-064S0S2-4343W, define the following macros in the application Makefile:
 
-   Macro | Description | Example
-   ------|-------------|-------
-   `CY_TFM_PSA_SUPPORTED` <br> <br>`TFM_MULTI_CORE_NS_OS` | When the MQTT library is used on secured platforms such as CY8CKIT-064S0S2-4343W | `DEFINES+=CY_TFM_PSA_SUPPORTED TFM_MULTI_CORE_NS_OS`
-   `CY_SECURE_SOCKETS_PKCS_SUPPORT` | Enables PKCS-PSA support on secured platforms such as CY8CKIT-064S0S2-4343W | `DEFINES+=CY_SECURE_SOCKETS_PKCS_SUPPORT`
+    Macro | Description | Example
+    ------|-------------|-------
+    `CY_TFM_PSA_SUPPORTED` <br> <br>`TFM_MULTI_CORE_NS_OS` | When the MQTT library is used on secured platforms such as CY8CKIT-064S0S2-4343W | `DEFINES+=CY_TFM_PSA_SUPPORTED TFM_MULTI_CORE_NS_OS`
+    `CY_SECURE_SOCKETS_PKCS_SUPPORT` | Enables PKCS-PSA support on secured platforms such as CY8CKIT-064S0S2-4343W | `DEFINES+=CY_SECURE_SOCKETS_PKCS_SUPPORT`
 
     <br>
 
     **Note:** Secured platforms such as CY8CKIT-064S0S2-4343W use trusted-firmware-m library for crypto operations. Due to security vulnerability in HW acceleration, trusted-firmware-m version v1.3.3 uses software implementation for ECC crypto algorithm. Because the software implementation is slower, it is recommended to set `configEXPECTED_IDLE_TIME_BEFORE_SLEEP` to at least 100 in the application's *FreeRTOSConfig.h* file.
 
-9. Add the trusted firmware library include path before the Mbed TLS library include path in the application Makefile. This is required to compile the MQTT library for secured platforms such as CY8CKIT-064S0S2-4343W. The Makefile entry should look like as follows:
+11. Add the trusted firmware library include path before the Mbed TLS library include path in the application Makefile. This is required to compile the MQTT library for secured platforms such as CY8CKIT-064S0S2-4343W. The Makefile entry should look like as follows:
     ```
     INCLUDES=$(SEARCH_trusted-firmware-m)/COMPONENT_TFM_NS_INTERFACE/include
     INCLUDES+=libs/trusted-firmware-m/COMPONENT_TFM_NS_INTERFACE/include
@@ -142,9 +159,9 @@ If virtual APIs are to be used, it additionally depends on the [Virtual Connecti
 
 ### Virtual API usage
 
-1. To use MQTT virtual APIs, pull [Virtual Connectivity Manager](https://github.com/Infineon/virtual-connectivity-manager) library. Create the following *.mtb* file to pull the library
-     
-     *virtual-connectivity-manager.mtb:* https://github.com/Infineon/virtual-connectivity-manager#latest-v1.X#$$ASSET_REPO$$/virtual-connectivity-manager/latest-v1.X
+1. To use MQTT virtual APIs, pull [Virtual Connectivity Manager]( https://github.com/Infineon/virtual-connectivity-manager ) library. Create the following *.mtb* file to pull the library
+
+     *virtual-connectivity-manager.mtb:* `https://github.com/Infineon/virtual-connectivity-manager#latest-v1.X#$$ASSET_REPO$$/virtual-connectivity-manager/latest-v1.X`
 
 **Note:** To use MQTT APIs in a multi-core environment, applications on both the cores should include MQTT and VCM libraries.
 
@@ -156,7 +173,9 @@ If virtual APIs are to be used, it additionally depends on the [Virtual Connecti
    ```
    DEFINES+=ENABLE_MULTICORE_CONN_MW USE_VIRTUAL_API VCM_ENABLE_MQTT
    ```
-* Call the `cy_vcm_init()` function provided by the VCM library from the application on both cores, before invoking the virtual MQTT APIs. See [Virtual Connectivity Manager library API documentation](https://Infineon.github.io/virtual-connectivity-manager/api_reference_manual/html/group__logging__utils.html).
+4. Call the `cy_vcm_init()` function provided by the VCM library from the application on both cores, before invoking the virtual MQTT APIs.
+
+   See [Virtual Connectivity Manager library API documentation]( https://infineon.github.io/virtual-connectivity-manager/api_reference_manual/html/index.html ).
 
 **Notes:**
 
@@ -173,9 +192,9 @@ The MQTT library disables all debug log messages by default. Do the following to
     DEFINES+=ENABLE_MQTT_LOGS
     ```
 
-2. Call the `cy_log_init()` function provided by the *cy-log* module. cy-log is part of the *connectivity-utilities* library. See [connectivity-utilities library API documentation](https://infineon.github.io/connectivity-utilities/api_reference_manual/html/group__logging__utils.html) for cy-log details.
+2. Call the `cy_log_init()` function provided by the *cy-log* module. cy-log is part of the *connectivity-utilities* library. See [connectivity-utilities library API documentation]( https://infineon.github.io/connectivity-utilities/api_reference_manual/html/group__logging__utils.html ) for cy-log details.
 
-   - To enable logs in a dual core application please refer to [Enable logs in dual core application](https://Infineon.github.io/virtual-connectivity-manager/README.md#enable-logs-in-dual-core-application) section in Virtual Connectivity Manager.
+   - To enable logs in a dual core application please refer to [Enable logs in dual core application]( https://github.com/Infineon/virtual-connectivity-manager#enable-logs-in-dual-core-application ) section in Virtual Connectivity Manager.
 
 ## Stack size
 
@@ -222,9 +241,9 @@ The default stack size of the mqtt event processing thread is 3 KB (3*1024). To 
 
 For secured platforms such as CY8CKIT-064S0S2-4343W, the library depends on other libraries for PKCS-PSA support. Do the following to add dependent libraries:
 
-1. If using .lib files, create the [freertos-pkcs11-psa.lib](https://github.com/Linaro/freertos-pkcs11-psa/#80292d24f4978891b0fd35feeb5f1d6f6f0fff06) file for freertos-pkcs11-psa and add the .lib file along with other dependent library .lib files.
+1. If using .lib files, create the [freertos-pkcs11-psa.lib]( https://github.com/Linaro/freertos-pkcs11-psa/#80292d24f4978891b0fd35feeb5f1d6f6f0fff06 ) file for freertos-pkcs11-psa and add the .lib file along with other dependent library .lib files.
 
-2. If using .mtb files, create the [freertos-pkcs11-psa.mtb](https://github.com/Linaro/freertos-pkcs11-psa/#80292d24f4978891b0fd35feeb5f1d6f6f0fff06#$$ASSET_REPO$$/freertos-pkcs11-psa/master) file for freertos-pkcs11-psa and add the .mtb file along with other dependent library *.mtb* files.
+2. If using .mtb files, create the [freertos-pkcs11-psa.mtb]( https://github.com/Linaro/freertos-pkcs11-psa/#80292d24f4978891b0fd35feeb5f1d6f6f0fff06#$$ASSET_REPO$$/freertos-pkcs11-psa/master ) file for freertos-pkcs11-psa and add the .mtb file along with other dependent library *.mtb* files.
 
 3. Execute the `make getlibs` command.
 
@@ -233,7 +252,7 @@ For secured platforms such as CY8CKIT-064S0S2-4343W, the library depends on othe
 
 Do the following to establish a connection with the broker using credentials stored in the secured memory for secured platforms such as CY8CKIT-064S0S2-4343W:
 
-1. Provision the kit with the device and RootCA certificates. See [Device provisioning steps](https://community.infineon.com/t5/Resource-Library/Provisioning-Guide-for-the-Cypress-CY8CKIT-064S0S2-4343W-Kit/ta-p/252469).
+1. Provision the kit with the device and RootCA certificates. See [Device provisioning steps]( https://community.infineon.com/t5/Resource-Library/Provisioning-Guide-for-the-Cypress-CY8CKIT-064S0S2-4343W-Kit/ta-p/252469 ).
 
 2. User can update device certificate and RootCA certificate by modifying respective the policy *.json* file with the device and RootCA certificate paths to be provisioned to the secured element as follows:
 
@@ -255,12 +274,12 @@ Do the following to establish a connection with the broker using credentials sto
 
 - [MQTT client library RELEASE.md](./RELEASE.md)
 
-- [MQTT client API documentation](https://infineon.github.io/mqtt/api_reference_manual/html/index.html)
+- [MQTT client API documentation]( https://infineon.github.io/mqtt/api_reference_manual/html/index.html )
 
-- [Porting guide for MQTT v4.0.0](https://infineon.github.io/mqtt/porting_guide.md)
+- [Porting guide for MQTT v4.0.0]( https://github.com/Infineon/mqtt/blob/master/porting_guide.md )
 
-- [ModusToolbox&trade; software environment, quick start guide, documentation, and videos](https://www.infineon.com/modustoolbox)
+- [ModusToolbox&trade; software environment, quick start guide, documentation, and videos]( https://www.infineon.com/modustoolbox )
 
-- [AWS-IoT device SDK library](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00)
+- [AWS-IoT device SDK library]( https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00 )
 
-- [ModusToolbox&trade; code examples](https://github.com/Infineon?q=mtb-example-anycloud%20NOT%20Deprecated)
+- [ModusToolbox&trade; code examples]( https://github.com/Infineon?q=mtb-example-anycloud%20NOT%20Deprecated )

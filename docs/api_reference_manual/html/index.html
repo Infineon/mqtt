@@ -104,6 +104,7 @@ Multi-core architecture and virtual API support</h2>
 <p >The library supports multi-core architecture by making a subset of APIs available as virtual APIs. The virtualization of the MQTT library helps to access the MQTT APIs defined in one core from the other core using Inter Process Communication (IPC). MQTT can now be run on two cores simultaneously, with one core containing the full stack (primary core) and the other core containing the subset of virtual-only APIs (secondary core). The virtual APIs pipe the API requests over IPC to the primary core where the API is actually executed and the result is passed back to the secondary core. This virtualization abstracts out the implementation details and complexity of IPC, thus making multi-core connectivity application development simple.</p>
 <ul>
 <li>The AWS IoT Device SDK C library provides the following features:<ul>
+<li>Supports Wi-Fi and Ethernet connections</li>
 <li>MQTT 3.1.1 client</li>
 <li>Synchronous API for MQTT operations</li>
 <li>Multi-threaded API by default</li>
@@ -134,6 +135,7 @@ Supported platforms</h1>
 <li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cyw954907aeval1f/">CYW943907AEVAL1F Evaluation Kit(CYW943907AEVAL1F)</a></li>
 <li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cyw943907aeval1f/">CYW954907AEVAL1F Evaluation Kit(CYW954907AEVAL1F)</a></li>
 <li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/">PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-MUR-43439M2)</a></li>
+<li><a href="https://www.infineon.com/KIT_XMC72_EVK">XMC7200D-E272K8384 kit (KIT-XMC72-EVK)</a></li>
 </ul>
 <dl class="section note"><dt>Note</dt><dd>Virtual APIs are supported on all PSoC 62 devices, but they have only been tested on the CY8CEVAL-062S2-MUR-43439M2 kit.</dd></dl>
 <h1><a class="anchor" id="section_dependencies"></a>
@@ -145,6 +147,16 @@ Dependent libraries</h1>
 <h1><a class="anchor" id="section_quick_start"></a>
 Quick start</h1>
 <ul>
+<li>To use mqtt library with Wi-Fi kits on FreeRTOS, lwIP, and Mbed TLS combination, the application should pull <a href="https://github.com/Infineon/mqtt">mqtt</a> library and <a href="https://github.com/Infineon/wifi-core-freertos-lwip-mbedtls">wifi-core-freertos-lwip-mbedtls</a> library which will internally pull secure-sockets, wifi-connection-manager, FreeRTOS, lwIP, Mbed TLS and other dependent modules. To pull wifi-core-freertos-lwip-mbedtls and mqtt libraries create the following *.mtb* files in deps folder.<ul>
+<li>wifi-core-freertos-lwip-mbedtls.mtb: <a href="https://github.com/Infineon/wifi-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/wifi-core-freertos-lwip-mbedtls/latest-v1.X">https://github.com/Infineon/wifi-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/wifi-core-freertos-lwip-mbedtls/latest-v1.X</a></li>
+<li>mqtt.mtb: <a href="https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X">https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X</a></li>
+</ul>
+</li>
+<li>To use mqtt library with Ethernet kits on FreeRTOS, lwIP, and Mbed TLS combination, the application should pull <a href="https://github.com/Infineon/mqtt">mqtt</a> library and <a href="https://github.com/Infineon/ethernet-core-freertos-lwip-mbedtls">ethernet-core-freertos-lwip-mbedtls</a> library which will internally pull secure-sockets, ethernet-connection-manager, FreeRTOS, lwIP, Mbed TLS and other dependent modules. To pull ethernet-core-freertos-lwip-mbedtls and mqtt librarries create the following *.mtb* files in deps folder.<ul>
+<li>ethernet-core-freertos-lwip-mbedtls.mtb: <a href="https://github.com/Infineon/ethernet-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/ethernet-core-freertos-lwip-mbedtls/latest-v1.X">https://github.com/Infineon/ethernet-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/ethernet-core-freertos-lwip-mbedtls/latest-v1.X</a></li>
+<li>mqtt.mtb: <a href="https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X">https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X</a></li>
+</ul>
+</li>
 <li>Ensure that the application includes *./include/cy_mqtt_api.h* to use the library APIs and structure.</li>
 <li>The reference *./include/core_mqtt_config.h* file that is bundled with this library provides the default configurations required for the <a href="https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00">AWS IoT device SDK</a> library.</li>
 <li>By default, <a href="https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00">AWS IoT device SDK</a> library logging is turned off. To enable log messages, map the logging-related macros <code>LogError</code>, <code>LogWarn</code>, <code>LogInfo</code>, and <code>LogDebug</code> in *./include/core_mqtt_config.h* to the application-specific logging implementation.</li>
@@ -187,7 +199,6 @@ Quick start</h1>
 <li>Define the following COMPONENTS in the application's Makefile for the MQTT library. <div class="fragment"><div class="line">COMPONENTS=FREERTOS MBEDTLS LWIP SECURE_SOCKETS</div>
 </div><!-- fragment --></li>
 <li>The "aws-iot-device-sdk-port" layer includes the "coreHTTP" and "coreMQTT" modules of the "aws-iot-device-sdk-embedded-C" library by default. If the user application doesn't use HTTP client features, update the application Makefile to exclude the coreHTTP source files from the build. The Makefile entry should look like the following: <div class="fragment"><div class="line">CY_IGNORE+= $(SEARCH_aws-iot-device-sdk-embedded-C)/libraries/standard/coreHTTP</div>
-<div class="line">CY_IGNORE+= libs/aws-iot-device-sdk-embedded-C/libraries/standard/coreHTTP</div>
 </div><!-- fragment --></li>
 <li>The MQTT library is supported on multiple platforms. When it is used on secured platforms such as CY8CKIT-064S0S2-4343W, the macros <code>CY_TFM_PSA_SUPPORTED</code> and <code>TFM_MULTI_CORE_NS_OS</code> need to be defined in the application Makefile. The Makefile entry should look like the following: <div class="fragment"><div class="line">DEFINES += CY_TFM_PSA_SUPPORTED TFM_MULTI_CORE_NS_OS</div>
 </div><!-- fragment --></li>
@@ -201,7 +212,7 @@ Quick start</h1>
 <li>Add the <code>ENABLE_MQTT_LOGS</code> macro to the <em>DEFINES</em> in the code example's Makefile. The Makefile entry should look like as follows: <div class="fragment"><div class="line">DEFINES+=ENABLE_MQTT_LOGS</div>
 </div><!-- fragment --></li>
 <li>Call the <code>cy_log_init()</code> function provided by the <em>cy-log</em> module. cy-log is part of the <em>connectivity-utilities</em> library. See <a href="https://infineon.github.io/connectivity-utilities/api_reference_manual/html/group__logging__utils.html">connectivity-utilities library API documentation</a> for cy-log details.<ul>
-<li>To enable logs in a dual core application please refer to <a href="https://Infineon.github.io/virtual-connectivity-manager/README.md#enable-logs-in-dual-core-application">Enable logs in dual core application</a> section in Virtual Connectivity Manager.</li>
+<li>To enable logs in a dual core application please refer to <a href="https://github.com/Infineon/virtual-connectivity-manager#enable-logs-in-dual-core-application">Enable logs in dual core application</a> section in Virtual Connectivity Manager.</li>
 </ul>
 </li>
 </ol>
@@ -219,7 +230,7 @@ Virtual API usage</h2>
 </div><!-- fragment --></li>
 <li>Define the following compile-time macros in the secondary core application's Makefile: <div class="fragment"><div class="line">DEFINES+=ENABLE_MULTICORE_CONN_MW USE_VIRTUAL_API VCM_ENABLE_MQTT</div>
 </div><!-- fragment --></li>
-<li>Call the <code>cy_vcm_init()</code> function provided by the VCM library from the application on both cores, before invoking the virtual MQTT APIs. See <a href="https://github.com/Infineon/virtual-connectivity-manager">Virtual Connectivity Manager</a> library documentation. <dl class="section note"><dt>Note</dt><dd>- To ensure that the VCM initialization is synchronized, the project which boots first(i.e CM0+ project in case of psoc62) must call <code>cy_vcm_init</code> before bringing up the second project(i.e CM4 project in case of psoc62). </dd>
+<li>Call the <code>cy_vcm_init()</code> function provided by the VCM library from the application on both cores, before invoking the virtual MQTT APIs. See <a href="https://infineon.github.io/virtual-connectivity-manager/api_reference_manual/html/index.html">Virtual Connectivity Manager API documentation</a>. <dl class="section note"><dt>Note</dt><dd>- To ensure that the VCM initialization is synchronized, the project which boots first(i.e CM0+ project in case of psoc62) must call <code>cy_vcm_init</code> before bringing up the second project(i.e CM4 project in case of psoc62). </dd>
 <dd>
 - The first project must initialize VCM, by passing <code>config.hal_resource_opt</code> as <code>CY_VCM_CREATE_HAL_RESOURCE</code> in <code>cy_vcm_init</code>. The second project must pass <code>config.hal_resource_opt</code> as <code>CY_VCM_USE_HAL_RESOURCE</code>.</dd></dl>
 </li>
