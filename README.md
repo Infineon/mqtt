@@ -69,7 +69,9 @@ Some of the key features include:
 
 - [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-MUR-43439M2)]( https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/ )
 
-- [XMC7200D-E272K8384 kit (KIT-XMC72-EVK)](https://www.infineon.com/KIT_XMC72_EVK)
+- [XMC7200D-E272K8384 kit (KIT-XMC72-EVK)](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc72_evk/)
+
+- [XMC7200D-E272K8384 kit (KIT_XMC72_EVK_MUR_43439M2)](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc72_evk/)
 
 **Note:** Virtual APIs are supported on all PSoC 62 devices, but they have only been tested on the CY8CEVAL-062S2-MUR-43439M2 kit.
 

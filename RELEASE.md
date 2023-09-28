@@ -13,6 +13,11 @@ See the [README.md](./README.md) for a complete description of the MQTT client l
 
 ## Changelog
 
+### v4.2.0
+
+- Minor bug fixes.
+- Added support for KIT_XMC72_EVK_MUR_43439M2 kit
+
 ### v4.1.0
 
 - Added support for KIT_XMC72_EVK kit

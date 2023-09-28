@@ -77,14 +77,14 @@ static void virtual_event_handler(void *arg)
     mqtt_event_params = (cy_mqtt_callback_params_t *)arg;
     mqtt_handle = mqtt_event_params->mqtt_handle;
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n virtual_event_handler - Acquiring Mutex %p ", cb_database_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n virtual_event_handler - Acquiring Mutex %p \n", cb_database_mutex );
     res = cy_rtos_get_mutex( &cb_database_mutex, CY_RTOS_NEVER_TIMEOUT );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", cb_database_mutex, (unsigned int)res );
         /* Freeing the memory allocated in local_mqtt_event_cb function in VCM */
-        free((char*)mqtt_event_params->event.data.pub_msg.received_message.payload);
-        free((char*)mqtt_event_params->event.data.pub_msg.received_message.topic);
+        cy_vcm_free((void*)mqtt_event_params->event.data.pub_msg.received_message.payload);
+        cy_vcm_free((void*)mqtt_event_params->event.data.pub_msg.received_message.topic);
         return;
     }
 
@@ -102,15 +102,15 @@ static void virtual_event_handler(void *arg)
     }
 
     /* Freeing the memory allocated in local_mqtt_event_cb function in VCM */
-    free((char*)mqtt_event_params->event.data.pub_msg.received_message.payload);
-    free((char*)mqtt_event_params->event.data.pub_msg.received_message.topic);
+    cy_vcm_free((void*)mqtt_event_params->event.data.pub_msg.received_message.payload);
+    cy_vcm_free((void*)mqtt_event_params->event.data.pub_msg.received_message.topic);
 
     res = cy_rtos_set_mutex( &cb_database_mutex );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", cb_database_mutex, (unsigned int)res );
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n virtual_event_handler - Releasing Mutex %p ", cb_database_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n virtual_event_handler - Releasing Mutex %p \n", cb_database_mutex );
 }
 
 /* This section is virtual-only implementation.
@@ -232,11 +232,11 @@ cy_rslt_t cy_mqtt_register_event_callback( cy_mqtt_t mqtt_handle,
         return CY_RSLT_MODULE_MQTT_NOT_INITIALIZED;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_register_event_callback - Acquiring Mutex %p ", cb_database_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_register_event_callback - Acquiring Mutex %p \n", cb_database_mutex );
     res = cy_rtos_get_mutex( &cb_database_mutex, CY_RTOS_NEVER_TIMEOUT );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", cb_database_mutex, (unsigned int)res );
         return res;
     }
 
@@ -273,9 +273,9 @@ cy_rslt_t cy_mqtt_register_event_callback( cy_mqtt_t mqtt_handle,
     res = cy_rtos_set_mutex( &cb_database_mutex );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", cb_database_mutex, (unsigned int)res );
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_register_event_callback - Releasing Mutex %p ", cb_database_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_register_event_callback - Releasing Mutex %p \n", cb_database_mutex );
 
     if( handle_found == true )
     {
@@ -342,11 +342,11 @@ cy_rslt_t cy_mqtt_deregister_event_callback( cy_mqtt_t mqtt_handle,
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_deregister_event_callback - Acquiring Mutex %p ", cb_database_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_deregister_event_callback - Acquiring Mutex %p \n", cb_database_mutex );
     res = cy_rtos_get_mutex( &cb_database_mutex, CY_RTOS_NEVER_TIMEOUT );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", cb_database_mutex, (unsigned int)res );
         return res;
     }
 
@@ -376,9 +376,9 @@ cy_rslt_t cy_mqtt_deregister_event_callback( cy_mqtt_t mqtt_handle,
     res = cy_rtos_set_mutex( &cb_database_mutex );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", cb_database_mutex, (unsigned int)res );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", cb_database_mutex, (unsigned int)res );
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_register_event_callback - Releasing Mutex %p ", cb_database_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n cy_mqtt_register_event_callback - Releasing Mutex %p \n", cb_database_mutex );
 
     /* If callback is not found in the callback database, return error. */
     if( cb_found == false )
@@ -583,7 +583,7 @@ cy_rslt_t cy_mqtt_deinit( void )
     res = cy_rtos_deinit_mutex( &cb_database_mutex );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_deinit_mutex failed with Error : [0x%X] ", (unsigned int)res );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_deinit_mutex failed with Error : [0x%X] \n", (unsigned int)res );
         return res;
     }
 
@@ -606,7 +606,14 @@ cy_rslt_t cy_mqtt_deinit( void )
 /**
  * Network socket receive timeout in milliseconds.
  */
+#ifdef COMPONENT_CAT5
+/* On CAT5 devices(H1-CP), the tick is configured for 10ms,
+ * so the smallest unit of time that can be configured is 10ms.
+ */
+#define CY_MQTT_SOCKET_RECEIVE_TIMEOUT_MS                    ( 10U )
+#else
 #define CY_MQTT_SOCKET_RECEIVE_TIMEOUT_MS                    ( 1U )
+#endif
 
 /**
  * Timeout in milliseconds for ProcessLoop.
@@ -698,6 +705,7 @@ typedef struct mqtt_object
     cy_mqtt_pubpack_t               outgoing_pub_packets[ CY_MQTT_MAX_OUTGOING_PUBLISHES ]; /**< MQTT PUBLISH packet. */
     cy_mutex_t                      process_mutex;             /**< Mutex for synchronizing MQTT object members. */
     cy_timer_t                      mqtt_timer;                /**< RTOS timer to handle the MQTT ping request */
+    cy_timer_t                      mqtt_ping_resp_timer;      /**< RTOS timer to handle the MQTT ping response timeout */
     void                            *user_data[ CY_MQTT_MAX_EVENT_CALLBACKS ];                /**< User data which needs to be sent while calling registered app callback. */
     uint16_t                        keepAliveSeconds;          /**< MQTT keep alive timeout in seconds. */
     uint32_t                        mqtt_magic_footer;         /**< Magic footer to verify the mqtt object */
@@ -763,11 +771,11 @@ static cy_rslt_t stop_timer( cy_mqtt_object_t *mqtt_obj )
     }
     if( mqtt_obj->keepAliveSeconds != 0 )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nStopping the timer" );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nStopping the timer\n" );
         result = cy_rtos_is_running_timer( &mqtt_obj->mqtt_timer, &state );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_rtos_is_running_timer failed" );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_rtos_is_running_timer failed\n" );
             return result;
         }
         if( state == true )
@@ -776,7 +784,7 @@ static cy_rslt_t stop_timer( cy_mqtt_object_t *mqtt_obj )
             result = cy_rtos_stop_timer( &mqtt_obj->mqtt_timer );
             if( result != CY_RSLT_SUCCESS )
             {
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_rtos_stop_timer failed" );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_rtos_stop_timer failed\n" );
             }
         }
     }
@@ -803,13 +811,101 @@ static cy_rslt_t start_timer( cy_mqtt_object_t *mqtt_obj )
             {
                 return result;
             }
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_start_timer failed with Error : [0x%X] ", (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_start_timer failed with Error : [0x%X] \n", (unsigned int)result );
             cy_rtos_delay_milliseconds(10);
             retry_count++;
         }
         while( retry_count < CY_MQTT_MAX_RETRY_VALUE );
     }
     return result;
+}
+
+/*
+ * start_mqtt_ping_resp_timer
+ *
+ * Start reponse timer for mqtt ping response.
+ */
+static cy_rslt_t start_mqtt_ping_resp_timer( cy_mqtt_object_t *mqtt_obj )
+{
+    cy_rslt_t result = CY_RSLT_SUCCESS;
+
+    if( mqtt_obj == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to start_mqtt_ping_resp_timer \n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    result = cy_rtos_start_timer( &mqtt_obj->mqtt_ping_resp_timer, MQTT_PINGRESP_TIMEOUT_MS );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR,
+                "\nMqtt ping resp timer start failed with Error : [0x%X] \n", (unsigned int)result );
+    }
+    return result;
+}
+
+/*
+ * stop_mqtt_ping_resp_timer
+ *
+ * Stop mqtt ping reponse timer.
+ */
+static cy_rslt_t stop_mqtt_ping_resp_timer( cy_mqtt_object_t *mqtt_obj )
+{
+    cy_rslt_t result = CY_RSLT_SUCCESS;
+    bool      state = false;
+
+    if( mqtt_obj == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to stop_mqtt_ping_resp_timer \n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+    /* stop response timer */
+    result = cy_rtos_is_running_timer( &mqtt_obj->mqtt_ping_resp_timer, &state );
+    if( result == CY_RSLT_SUCCESS && state == true )
+    {
+        result = cy_rtos_stop_timer( &mqtt_obj->mqtt_ping_resp_timer );
+        if( result != CY_RSLT_SUCCESS )
+        {
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nPing response timer stop failed\n" );
+        }
+    }
+    return result;
+}
+
+/*
+ * mqtt_pingresp_timeout_callback
+ *
+ * Callback if no ping response received in time.
+ */
+static void mqtt_pingresp_timeout_callback( void *arg )
+{
+    cy_rslt_t                res = CY_RSLT_SUCCESS;
+    cy_mqtt_callback_event_t event;
+    cy_mqtt_object_t         *mqtt_obj = NULL;
+
+    if( arg == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO,
+                "\nInvalid handle to mqtt_awsport_network_receive_callback, so nothing to do..!\n" );
+        return;
+    }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO,
+                    "\nMQTT Keepalive Timeout\n" );
+
+    mqtt_obj = ( cy_mqtt_object_t * )arg;
+
+    /* Queue Disconnect event */
+    event.socket_event = CY_MQTT_SOCKET_EVENT_DISCONNECT;
+    event.mqtt_obj = mqtt_obj;
+
+    res = cy_rtos_put_queue( &mqtt_event_queue, (void *)&event, CY_MQTT_EVENT_QUEUE_TIMEOUT_IN_MSEC, false );
+    if( res != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nPushing to MQTT event to mqtt_event_queue failed with Error : [0x%X] \n",
+                        (unsigned int)res );
+    }
+    return;
 }
 
 static void mqtt_ping_request_callback( cy_mqtt_object_t *mqtt_obj )
@@ -831,7 +927,7 @@ static void mqtt_ping_request_callback( cy_mqtt_object_t *mqtt_obj )
     result = cy_rtos_put_queue( &mqtt_event_queue, (void *)&event, CY_MQTT_EVENT_QUEUE_TIMEOUT_IN_MSEC, false );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nPushing mqtt_ping_request event to the mqtt_event_queue failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nPushing mqtt_ping_request event to the mqtt_event_queue failed with Error : [0x%X] \n", (unsigned int)result );
     }
     return;
 }
@@ -842,7 +938,7 @@ static cy_rslt_t mqtt_cleanup_outgoing_publish( cy_mqtt_object_t *mqtt_obj, uint
 {
     if( index >= CY_MQTT_MAX_OUTGOING_PUBLISHES )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to mqtt_cleanup_outgoing_publish." );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to mqtt_cleanup_outgoing_publish.\n" );
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
     /* Clear the outgoing PUBLISH packet. */
@@ -859,7 +955,7 @@ static cy_rslt_t mqtt_cleanup_outgoing_publish_with_packet_id( cy_mqtt_object_t 
 
     if( (mqtt_obj == NULL) || (packetid == MQTT_PACKET_ID_INVALID) )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to mqtt_cleanup_outgoing_publish_with_packet_id." );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to mqtt_cleanup_outgoing_publish_with_packet_id.\n" );
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
@@ -871,10 +967,10 @@ static cy_rslt_t mqtt_cleanup_outgoing_publish_with_packet_id( cy_mqtt_object_t 
             result = mqtt_cleanup_outgoing_publish( mqtt_obj, index );
             if( result != CY_RSLT_SUCCESS )
             {
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_cleanup_outgoing_publish failed with Error : [0x%X] ", (unsigned int)result );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_cleanup_outgoing_publish failed with Error : [0x%X] \n", (unsigned int)result );
                 break;
             }
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nCleaned up outgoing PUBLISH packet with packet id %u.\n\n", packetid );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nCleaned up outgoing PUBLISH packet with packet id %u.\n", packetid );
             break;
         }
     }
@@ -892,7 +988,7 @@ static cy_rslt_t mqtt_update_suback_status( cy_mqtt_object_t *mqtt_obj, MQTTPack
     mqttStatus = MQTT_GetSubAckStatusCodes( packet_info, &payload, &num_of_subscriptions );
     if( (mqttStatus != MQTTSuccess) || (num_of_subscriptions != mqtt_obj->num_of_subs_in_req) )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT_GetSubAckStatusCodes failed with status = %s.", MQTT_Status_strerror( mqttStatus ) );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT_GetSubAckStatusCodes failed with status = %s.\n", MQTT_Status_strerror( mqttStatus ) );
         /* SubAckStatusCodes are not available for outstanding subscription messages waiting for acknowledgment. So Setting num_of_subs_in_req to 0.*/
         mqtt_obj->num_of_subs_in_req = 0;
         return CY_RSLT_MODULE_MQTT_ERROR;
@@ -917,19 +1013,19 @@ static cy_rslt_t mqtt_get_next_free_index_for_publish( cy_mqtt_object_t *mqtt_ob
 
     if( (mqtt_obj == NULL) || (pindex == NULL) )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to mqtt_get_next_free_index_for_publish." );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to mqtt_get_next_free_index_for_publish.\n" );
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Acquiring Mutex %p \n", mqtt_obj->process_mutex );
     result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
         return result;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Acquired Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Acquired Mutex %p \n", mqtt_obj->process_mutex );
 
     for( index = 0; index < CY_MQTT_MAX_OUTGOING_PUBLISHES; index++ )
     {
@@ -944,15 +1040,15 @@ static cy_rslt_t mqtt_get_next_free_index_for_publish( cy_mqtt_object_t *mqtt_ob
         }
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Releasing Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Releasing Mutex %p \n", mqtt_obj->process_mutex );
     result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
 
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Released Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_get_next_free_index_for_publish - Released Mutex %p \n", mqtt_obj->process_mutex );
 
     if( index >= CY_MQTT_MAX_OUTGOING_PUBLISHES )
     {
@@ -968,7 +1064,7 @@ static cy_rslt_t mqtt_cleanup_outgoing_publishes( cy_mqtt_object_t *mqtt_obj )
 {
     if( mqtt_obj == NULL )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to mqtt_cleanup_outgoing_publishes." );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to mqtt_cleanup_outgoing_publishes.\n" );
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
@@ -1007,13 +1103,13 @@ static cy_rslt_t mqtt_handle_publish_resend( cy_mqtt_object_t *mqtt_obj )
                 {
                     mqtt_obj->outgoing_pub_packets[ index ].pubinfo.dup = true;
 
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nSending duplicate PUBLISH with packet id %u.",
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nSending duplicate PUBLISH with packet id %u.\n",
                                      mqtt_obj->outgoing_pub_packets[ index ].packetid );
                     mqttStatus = MQTT_Publish( &(mqtt_obj->mqtt_context), &(mqtt_obj->outgoing_pub_packets[ index ].pubinfo),
                                                mqtt_obj->outgoing_pub_packets[ index ].packetid );
                     if( mqttStatus != MQTTSuccess )
                     {
-                        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nSending duplicate PUBLISH for packet id %u failed with status %s.",
+                        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nSending duplicate PUBLISH for packet id %u failed with status %s.\n",
                                          mqtt_obj->outgoing_pub_packets[ index ].packetid, MQTT_Status_strerror( mqttStatus ) );
                         result = CY_RSLT_MODULE_MQTT_PUBLISH_FAIL;
                         break;
@@ -1035,7 +1131,7 @@ static cy_rslt_t mqtt_handle_publish_resend( cy_mqtt_object_t *mqtt_obj )
 
         if( found_packetid == false )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nPacket id %u requires resend, but was not found in outgoing_pub_packets.",
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nPacket id %u requires resend, but was not found in outgoing_pub_packets.\n",
                              packetid_to_resend );
             result = CY_RSLT_MODULE_MQTT_PUBLISH_FAIL;
             break;
@@ -1074,7 +1170,7 @@ static void mqtt_awsport_network_disconnect_callback( void *arg )
     result = cy_rtos_put_queue( &mqtt_event_queue, (void *)&event, CY_MQTT_EVENT_QUEUE_TIMEOUT_IN_MSEC, false );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nPushing disconnect event to the mqtt_event_queue failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nPushing disconnect event to the mqtt_event_queue failed with Error : [0x%X] \n", (unsigned int)result );
     }
 
     return;
@@ -1111,7 +1207,7 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
 
     if( (param_mqtt_context == NULL) || (param_packet_info == NULL) || (param_deserialized_info == NULL) )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to mqtt_event_callback." );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to mqtt_event_callback.\n" );
         return;
     }
 
@@ -1128,7 +1224,7 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
 
     if( handle == NULL )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Invalid MQTT Context.." );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Invalid MQTT Context..\n" );
         return;
     }
 
@@ -1169,7 +1265,7 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
         }
         else
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Invalid pPublishInfo.." );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Invalid pPublishInfo..\n" );
             return;
         }
     }
@@ -1183,7 +1279,7 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
                 /* Make sure that the ACK packet identifier matches with the Request packet identifier. */
                 if( mqtt_obj->sent_packet_id != packet_id )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nSUBACK packet identifier does not matches with Request packet identifier." );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nSUBACK packet identifier does not matches with Request packet identifier.\n" );
                 }
                 else
                 {
@@ -1196,7 +1292,7 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
                     {
                         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n mqtt_update_suback_status failed..!\n" );
                     }
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nSUBACK packet identifier matches with Request packet identifier." );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nSUBACK packet identifier matches with Request packet identifier.\n" );
                 }
                 break;
 
@@ -1204,12 +1300,12 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
                 /* Make sure that the UNSUBACK packet identifier matches with the Request packet identifier. */
                 if( mqtt_obj->sent_packet_id != packet_id )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nUNSUBACK packet identifier does not matches with Request packet identifier." );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nUNSUBACK packet identifier does not matches with Request packet identifier.\n" );
                     mqtt_obj->unsub_ack_received = false;
                 }
                 else
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nUNSUBACK packet identifier matches with Request packet identifier." );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nUNSUBACK packet identifier matches with Request packet identifier.\n" );
                     mqtt_obj->unsub_ack_received = true;
                 }
                 break;
@@ -1225,14 +1321,19 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
 
                     mqtt_obj->mqtt_session_established = false;
                 }
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nPing response received." );
+                else
+                {
+                    /* stop response timer */
+                    stop_mqtt_ping_resp_timer(mqtt_obj);
+                }
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nPing response received.\n" );
                 break;
 
             case MQTT_PACKET_TYPE_PUBREC:
                 cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nPUBREC received for packet id %u.\n\n", packet_id );
                 if( param_deserialized_info->deserializationResult != MQTTSuccess )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nPUBREC received with status %s.", MQTT_Status_strerror( param_deserialized_info->deserializationResult ) );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nPUBREC received with status %s.\n", MQTT_Status_strerror( param_deserialized_info->deserializationResult ) );
                 }
                 else
                 {
@@ -1261,7 +1362,7 @@ static void mqtt_event_callback( MQTTContext_t *param_mqtt_context,
                 cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nPUBACK received for packet id %u.\n\n", packet_id );
                 if( param_deserialized_info->deserializationResult != MQTTSuccess )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nPUBACK received with status %s.", MQTT_Status_strerror( param_deserialized_info->deserializationResult ) );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nPUBACK received with status %s.\n", MQTT_Status_strerror( param_deserialized_info->deserializationResult ) );
                 }
                 else
                 {
@@ -1307,7 +1408,7 @@ static cy_rslt_t mqtt_establish_session( cy_mqtt_object_t *mqtt_obj,
     mqttStatus = MQTT_Connect( &(mqtt_obj->mqtt_context), connect_info, will_msg, CY_MQTT_CONNACK_RECV_TIMEOUT_MS, session_present );
     if( mqttStatus != MQTTSuccess )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nConnection with MQTT broker failed with status %s.", MQTT_Status_strerror( mqttStatus ) );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nConnection with MQTT broker failed with status %s.\n", MQTT_Status_strerror( mqttStatus ) );
         return CY_RSLT_MODULE_MQTT_CONNECT_FAIL;
     }
     else
@@ -1350,7 +1451,7 @@ int32_t mqtt_awsport_network_receive( NetworkContext_t *network_context, void *b
         else
         {
             total_received = total_received + bytes_received;
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n Total Bytes Received = %u", (unsigned int)total_received );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\n Total Bytes Received = %u\n", (unsigned int)total_received );
             /* Reset the wait time as some data is received. */
             elapsedTimeMs = 0;
             remainingTimeMs = CY_MQTT_MESSAGE_RECEIVE_TIMEOUT_MS;
@@ -1374,7 +1475,7 @@ static cy_rslt_t mqtt_initialize_core_lib( MQTTContext_t *param_mqtt_context,
 
     if( (param_mqtt_context == NULL) || (param_network_context == NULL) )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to mqtt_initialize_core_lib." );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n Bad arguments to mqtt_initialize_core_lib.\n" );
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
@@ -1395,7 +1496,7 @@ static cy_rslt_t mqtt_initialize_core_lib( MQTTContext_t *param_mqtt_context,
                             mqtt_event_callback, &networkBuffer );
     if( mqttStatus != MQTTSuccess )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT init failed with Status = %s.", MQTT_Status_strerror( mqttStatus ) );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n MQTT init failed with Status = %s.\n", MQTT_Status_strerror( mqttStatus ) );
         result = CY_RSLT_MODULE_MQTT_INIT_FAIL;
     }
 
@@ -1412,6 +1513,7 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
     cy_mqtt_callback_event_t   socket_event;
     MQTTStatus_t               mqtt_status = MQTTSuccess;
     bool                       connect_status = true;
+    bool                       mqtt_ping_resp_wait;
    (void)arg;
     int                        index = 0;
 
@@ -1439,11 +1541,11 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
             continue;
         }
 
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquiring Mutex %p ", mqtt_db_mutex );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquiring Mutex %p \n", mqtt_db_mutex );
         result = cy_rtos_get_mutex( &mqtt_db_mutex, CY_RTOS_NEVER_TIMEOUT );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
             continue;
         }
 
@@ -1462,9 +1564,9 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
             result = cy_rtos_set_mutex( &mqtt_db_mutex );
             if( result != CY_RSLT_SUCCESS )
             {
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
             }
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p ", mqtt_db_mutex );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p \n", mqtt_db_mutex );
             continue;
         }
 
@@ -1473,30 +1575,31 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
             case CY_MQTT_SOCKET_EVENT_DATA_RECEIVE:
             {
                 mqtt_obj = (cy_mqtt_object_t *)socket_event.mqtt_obj;
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquiring Mutex %p \n", mqtt_obj->process_mutex );
                 result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
                     result = cy_rtos_set_mutex( &mqtt_db_mutex );
                     if( result != CY_RSLT_SUCCESS )
                     {
-                        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+                        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
                     }
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p ", mqtt_db_mutex );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p \n", mqtt_db_mutex );
                     continue;
                 }
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquired Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquired Mutex %p \n", mqtt_obj->process_mutex );
                 /* Stop MQTT Ping Timer */
                 result = stop_timer( mqtt_obj );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstop_timer failed" );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstop_timer failed\n" );
                 }
 
                 connect_status = mqtt_obj->mqtt_session_established;
                 if( connect_status )
                 {
+                    mqtt_ping_resp_wait = mqtt_obj->mqtt_context.waitingForPingResp;
                     mqtt_status = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_RECEIVE_DATA_TIMEOUT_MS );
                     if( mqtt_status != MQTTSuccess )
                     {
@@ -1527,22 +1630,30 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
                             mqtt_obj->mqtt_session_established = false;
                         }
                     }
+                    else
+                    {
+                        if( ( mqtt_ping_resp_wait == true ) && ( mqtt_obj->mqtt_context.waitingForPingResp == false ) )
+                        {
+                            /* we have received the mqtt response. Stop timer */
+                            stop_mqtt_ping_resp_timer( mqtt_obj );
+                        }
+                    }
                 }
 
                 /* Start MQTT Ping Timer */
                 result = start_timer( mqtt_obj );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed" );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed\n" );
                 }
 
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Releasing Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Releasing Mutex %p \n", mqtt_obj->process_mutex );
                 result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
                 }
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p \n", mqtt_obj->process_mutex );
 
                 break;
             }
@@ -1550,26 +1661,31 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
             case CY_MQTT_SOCKET_EVENT_DISCONNECT:
             {
                 mqtt_obj = (cy_mqtt_object_t *)socket_event.mqtt_obj;
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquiring Mutex %p \n", mqtt_obj->process_mutex );
                 result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
                     result = cy_rtos_set_mutex( &mqtt_db_mutex );
                     if( result != CY_RSLT_SUCCESS )
                     {
-                        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+                        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
                     }
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p ", mqtt_db_mutex );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p \n", mqtt_db_mutex );
                     continue;
                 }
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquired Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquired Mutex %p \n", mqtt_obj->process_mutex );
 
                 /* Stop MQTT Ping Timer */
                 result = stop_timer( mqtt_obj );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstop_timer failed" );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstop_timer failed\n" );
+                }
+                result = stop_mqtt_ping_resp_timer( mqtt_obj );
+                if( result != CY_RSLT_SUCCESS )
+                {
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstop mqtt ping resp timer failed\n" );
                 }
 
                 /* Reset keepAliveSeconds to 0 to avoid timer activity after disconnection */
@@ -1585,13 +1701,13 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
                     mqtt_obj->mqtt_session_established = false;
                 }
 
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Releasing Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Releasing Mutex %p \n", mqtt_obj->process_mutex );
                 result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
                 }
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p \n", mqtt_obj->process_mutex );
 
                 break;
             }
@@ -1599,25 +1715,25 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
             case CY_MQTT_SOCKET_EVENT_PING_REQ:
             {
                 mqtt_obj = (cy_mqtt_object_t *)socket_event.mqtt_obj;
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquiring Mutex %p \n", mqtt_obj->process_mutex );
                 result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
                     result = cy_rtos_set_mutex( &mqtt_db_mutex );
                     if( result != CY_RSLT_SUCCESS )
                     {
-                        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+                        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
                     }
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p ", mqtt_db_mutex );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p \n", mqtt_db_mutex );
                     continue;
                 }
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquired Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Acquired Mutex %p \n", mqtt_obj->process_mutex );
                 /* Stop MQTT Ping Timer */
                 result = stop_timer( mqtt_obj );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstop_timer failed" );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstop_timer failed\n" );
                 }
 
                 connect_status = mqtt_obj->mqtt_session_established;
@@ -1645,36 +1761,41 @@ static void mqtt_event_processing_thread( cy_thread_arg_t arg )
 
                         break;
                     }
+                    else
+                    {
+                        /* Start ping response timer */
+                        start_mqtt_ping_resp_timer(mqtt_obj);
+                    }
                 }
                 /* Start MQTT Ping Timer */
                 result = start_timer( mqtt_obj );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed" );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed\n" );
                 }
 
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Releasing Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Releasing Mutex %p \n", mqtt_obj->process_mutex );
                 result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
                 if( result != CY_RSLT_SUCCESS )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
                 }
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p ", mqtt_obj->process_mutex );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p \n", mqtt_obj->process_mutex );
 
                 break;
             }
             default:
             {
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid event type " );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid event type \n" );
                 break;
             }
         }
         result = cy_rtos_set_mutex( &mqtt_db_mutex );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         }
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p ", mqtt_db_mutex );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_event_processing_thread - Released Mutex %p \n", mqtt_db_mutex );
     }
     result = cy_rtos_exit_thread();
     if( result != CY_RSLT_SUCCESS )
@@ -1704,7 +1825,7 @@ static void mqtt_awsport_network_receive_callback( void *arg )
     res = cy_rtos_put_queue( &mqtt_event_queue, (void *)&event, CY_MQTT_EVENT_QUEUE_TIMEOUT_IN_MSEC, false );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nPushing to MQTT event to mqtt_event_queue failed with Error : [0x%X] ", (unsigned int)res );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nPushing to MQTT event to mqtt_event_queue failed with Error : [0x%X] \n", (unsigned int)res );
     }
     return;
 }
@@ -1724,7 +1845,7 @@ cy_rslt_t cy_mqtt_init( void )
     result = cy_rtos_init_mutex2( &mqtt_db_mutex, false );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nCreating new mutex %p. failed", mqtt_db_mutex );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nCreating new mutex %p. failed\n", mqtt_db_mutex );
         return result;
     }
     mqtt_db_mutex_init_status = true;
@@ -1732,7 +1853,7 @@ cy_rslt_t cy_mqtt_init( void )
     result = cy_awsport_network_init();
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_init failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_init failed with Error : [0x%X] \n", (unsigned int)result );
         (void)cy_rtos_deinit_mutex( &mqtt_db_mutex );
         mqtt_db_mutex_init_status = false;
         return result;
@@ -1744,7 +1865,7 @@ cy_rslt_t cy_mqtt_init( void )
     result = cy_rtos_init_queue( &mqtt_event_queue, CY_MQTT_EVENT_QUEUE_SIZE, sizeof(cy_mqtt_callback_event_t) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_init_queue failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_init_queue failed with Error : [0x%X] \n", (unsigned int)result );
         (void)cy_rtos_deinit_mutex( &mqtt_db_mutex );
         (void)cy_awsport_network_deinit();
         mqtt_db_mutex_init_status = false;
@@ -1755,7 +1876,7 @@ cy_rslt_t cy_mqtt_init( void )
                                     CY_MQTT_EVENT_THREAD_STACK_SIZE, CY_MQTT_EVENT_THREAD_PRIORITY, 0 );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_create_thread failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_create_thread failed with Error : [0x%X] \n", (unsigned int)result );
         (void)cy_rtos_deinit_mutex( &mqtt_db_mutex );
         (void)cy_awsport_network_deinit();
         (void)cy_rtos_deinit_queue( &mqtt_event_queue );
@@ -1764,7 +1885,7 @@ cy_rslt_t cy_mqtt_init( void )
     }
 
     mqtt_lib_init_status = true;
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_awsport_network_init successful." );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_awsport_network_init successful.\n" );
 
     return result;
 }
@@ -1823,10 +1944,10 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
     result = cy_rtos_get_mutex( &mqtt_db_mutex, CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_create - Acquired Mutex %p ", mqtt_db_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_create - Acquired Mutex %p \n", mqtt_db_mutex );
 
     if( mqtt_handle_count >= CY_MQTT_MAX_HANDLE )
     {
@@ -1838,15 +1959,15 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
     result = cy_rtos_set_mutex( &mqtt_db_mutex );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_create - Released Mutex %p ", mqtt_db_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_create - Released Mutex %p \n", mqtt_db_mutex );
 
     result = cy_mqtt_get_handle( &handle, descriptor );
     if( result == CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nDescriptor is not unique. " );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nDescriptor is not unique. \n" );
         return CY_RSLT_MODULE_MQTT_BADARG;
     }
 
@@ -1894,7 +2015,7 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
     result = cy_rtos_init_mutex2( &(mqtt_obj->process_mutex), false );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nCreating new mutex %p. failed", mqtt_obj->process_mutex );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nCreating new mutex %p. failed\n", mqtt_obj->process_mutex );
         goto exit;
     }
 
@@ -1903,12 +2024,12 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
     result = mqtt_initialize_core_lib( &(mqtt_obj->mqtt_context), &(mqtt_obj->network_context), buffer, bufflen );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nmqtt_initialize_core_lib failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nmqtt_initialize_core_lib failed with Error : [0x%X] \n", (unsigned int)result );
         goto exit;
     }
     else
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_initialize_core_lib successful." );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nmqtt_initialize_core_lib successful.\n" );
     }
 
     mqtt_obj->network_context.disconnect_info.cbf = mqtt_awsport_network_disconnect_callback;
@@ -1920,10 +2041,10 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
     result = cy_rtos_get_mutex( &mqtt_db_mutex, CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         goto exit;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_create - Acquired Mutex %p ", mqtt_db_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_create - Acquired Mutex %p \n", mqtt_db_mutex );
 
     slot_index = 0;
     slot_found = false;
@@ -1952,11 +2073,24 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
     result = cy_rtos_init_timer( &mqtt_obj->mqtt_timer, CY_TIMER_TYPE_ONCE, ( cy_timer_callback_t )mqtt_ping_request_callback, ( cy_timer_callback_arg_t )mqtt_obj );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_init_timer failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_init_timer failed with Error : [0x%X] \n", (unsigned int)result );
         result = cy_rtos_set_mutex( &mqtt_db_mutex );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
+        }
+        goto exit;
+    }
+    result = cy_rtos_init_timer( &mqtt_obj->mqtt_ping_resp_timer, CY_TIMER_TYPE_ONCE, ( cy_timer_callback_t )mqtt_pingresp_timeout_callback, ( cy_timer_callback_arg_t )mqtt_obj );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR,
+                "\nPing Resp Timer: cy_rtos_init_timer failed with Error : [0x%X] \n", (unsigned int)result );
+        result = cy_rtos_set_mutex( &mqtt_db_mutex );
+        if( result != CY_RSLT_SUCCESS )
+        {
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR,
+                    "\nPing Resp Timer: cy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         }
         goto exit;
     }
@@ -1971,10 +2105,10 @@ cy_rslt_t cy_mqtt_create( uint8_t *buffer, uint32_t bufflen,
     result = cy_rtos_set_mutex( &mqtt_db_mutex );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         goto exit;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_create - Released Mutex %p ", mqtt_db_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_create - Released Mutex %p \n", mqtt_db_mutex );
 
     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nMQTT object created successfully..\n" );
 
@@ -2031,11 +2165,11 @@ cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connec
         return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_connect - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_connect - Acquiring Mutex %p \n", mqtt_obj->process_mutex );
     result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
         return result;
     }
 
@@ -2128,14 +2262,14 @@ cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connec
         result = cy_awsport_network_create( &(mqtt_obj->network_context), &(mqtt_obj->server_info), security, &(mqtt_obj->network_context.disconnect_info), &(mqtt_obj->network_context.receive_info) );
         if ( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_create failed with Error : [0x%X] ", (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_create failed with Error : [0x%X] \n", (unsigned int)result );
             cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nConnection to the broker failed. Retrying connection with backoff and jitter.\n" );
             retryUtilsStatus = RetryUtils_BackoffAndSleep( &reconnectParams );
         }
         else
         {
             /* Establish a TLS session with the MQTT broker. */
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "Establishing a TLS session to %.*s:%d.",
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "Establishing a TLS session to %.*s:%d.\n",
                              strlen(mqtt_obj->server_info.host_name), mqtt_obj->server_info.host_name, mqtt_obj->server_info.port );
             result = cy_awsport_network_connect( &(mqtt_obj->network_context),
                                                  CY_MQTT_MESSAGE_SEND_TIMEOUT_MS,
@@ -2164,7 +2298,7 @@ cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connec
 
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nTLS connection failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nTLS connection failed with Error : [0x%X] \n", (unsigned int)result );
         goto exit;
     }
 
@@ -2176,14 +2310,14 @@ cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connec
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nCreating clean session ..\n" );
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nCreating an MQTT connection to %.*s.",
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nCreating an MQTT connection to %.*s.\n",
                      strlen(mqtt_obj->server_info.host_name), mqtt_obj->server_info.host_name );
 
     /* Sends an MQTT Connect packet using the established TLS session. */
     result = mqtt_establish_session( mqtt_obj, &connect_details, will_msg_ptr, create_clean_session, &(mqtt_obj->broker_session_present) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nEstablish MQTT session failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nEstablish MQTT session failed with Error : [0x%X] \n", (unsigned int)result );
         goto exit;
     }
     else
@@ -2191,25 +2325,25 @@ cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connec
 
         if( (mqtt_obj->broker_session_present == true) && (create_clean_session == false) )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nMQTT session with broker is re-established. Resending unacked publishes." );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\nMQTT session with broker is re-established. Resending unacked publishes.\n" );
             /* Handle all resend of PUBLISH messages. */
             result = mqtt_handle_publish_resend( mqtt_obj );
             if( result != CY_RSLT_SUCCESS )
             {
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nHandle all the resend of PUBLISH messages failed with Error : [0x%X] ", (unsigned int)result );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nHandle all the resend of PUBLISH messages failed with Error : [0x%X] \n", (unsigned int)result );
                 goto exit;
             }
         }
         else
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\n A clean MQTT connection is established. Cleaning up all the stored outgoing publishes." );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO, "\n A clean MQTT connection is established. Cleaning up all the stored outgoing publishes.\n" );
 
             /* Clean up the outgoing PUBLISH packets and wait for ack because this new
              * connection does not re-establish an existing session. */
             result = mqtt_cleanup_outgoing_publishes( mqtt_obj );
             if( result != CY_RSLT_SUCCESS )
             {
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nCleaning of PUBLISH messages failed with Error : [0x%X] ", (unsigned int)result );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nCleaning of PUBLISH messages failed with Error : [0x%X] \n", (unsigned int)result );
                 goto exit;
             }
         }
@@ -2220,17 +2354,17 @@ cy_rslt_t cy_mqtt_connect( cy_mqtt_t mqtt_handle, cy_mqtt_connect_info_t *connec
     result = start_timer( mqtt_obj );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed with Error : [0x%X] \n", (unsigned int)result );
         goto exit;
     }
 
     result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
         goto exit;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_connect - Released Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_connect - Released Mutex %p \n", mqtt_obj->process_mutex );
 
     return result;
 
@@ -2240,7 +2374,7 @@ exit :
         mqttStatus = MQTT_Disconnect( &(mqtt_obj->mqtt_context) );
         if( mqttStatus != MQTTSuccess )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Sending MQTT DISCONNECT failed with status=%s.",
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Sending MQTT DISCONNECT failed with status=%s.\n",
                              MQTT_Status_strerror( mqttStatus ) );
             /*
              * In case of an unexpected network disconnection, the MQTT_Disconnect API always returns failure. Therefore,
@@ -2254,7 +2388,7 @@ exit :
     res = cy_awsport_network_disconnect( &(mqtt_obj->network_context) );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_disconnect failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_disconnect failed with Error : [0x%X] \n", (unsigned int)result );
         /*
          * In case of an unexpected network disconnection, the cy_awsport_network_disconnect API always returns failure. Therefore,
          * the return value of the cy_awsport_network_disconnect API is not checked here.
@@ -2264,7 +2398,7 @@ exit :
     res = cy_awsport_network_delete( &(mqtt_obj->network_context) );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_delete failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_delete failed with Error : [0x%X] \n", (unsigned int)result );
         /*
          * In case of an unexpected network disconnection, the cy_awsport_network_delete API always returns failure. Therefore,
          * the return value of the cy_awsport_network_delete API is not checked here.
@@ -2275,9 +2409,9 @@ exit :
     res = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
     if( res != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)res );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)res );
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_connect - Released Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_connect - Released Mutex %p \n", mqtt_obj->process_mutex );
 
     return result;
 }
@@ -2349,10 +2483,10 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
         result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
             return result;
         }
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_publish - Acquired Mutex %p ", mqtt_obj->process_mutex );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_publish - Acquired Mutex %p \n", mqtt_obj->process_mutex );
 
         /* Get a new packet ID. */
         mqtt_obj->pub_ack_status.packetid = mqtt_obj->outgoing_pub_packets[ publishIndex ].packetid;
@@ -2361,7 +2495,7 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
         result = stop_timer( mqtt_obj );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nstop_timer failed" );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nstop_timer failed\n" );
         }
 
         /* Publish retry loop. */
@@ -2376,7 +2510,7 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
                                        mqtt_obj->outgoing_pub_packets[ publishIndex ].packetid );
             if( mqttStatus != MQTTSuccess )
             {
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Failed to send PUBLISH packet to broker with error = %s.",
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Failed to send PUBLISH packet to broker with error = %s.\n",
                                  MQTT_Status_strerror( mqttStatus ) );
                 result = CY_RSLT_MODULE_MQTT_PUBLISH_FAIL;
             }
@@ -2393,7 +2527,7 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
                         mqttStatus = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_RECEIVE_DATA_TIMEOUT_MS );
                         if( (mqttStatus != MQTTSuccess) && (mqttStatus != MQTTNoDataAvailable) )
                         {
-                            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.", MQTT_Status_strerror( mqttStatus ) );
+                            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.\n", MQTT_Status_strerror( mqttStatus ) );
                             result = CY_RSLT_MODULE_MQTT_PUBLISH_FAIL;
                             break;
                         }
@@ -2430,7 +2564,7 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
         timer_result = start_timer( mqtt_obj );
         if( timer_result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed with Error : [0x%X] ", (unsigned int)timer_result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed with Error : [0x%X] \n", (unsigned int)timer_result );
             mqtt_cleanup_outgoing_publish( mqtt_obj, publishIndex );
             (void)cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
             return timer_result;
@@ -2453,10 +2587,10 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
         result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
             return result;
         }
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_publish - Released Mutex %p ", mqtt_obj->process_mutex );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_publish - Released Mutex %p \n", mqtt_obj->process_mutex );
     }
 
     return result;
@@ -2542,20 +2676,20 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
     result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
         free( sub_list );
         return result;
     }
 
     /* Generate the packet identifier for the SUBSCRIBE packet. */
     mqtt_obj->sent_packet_id = MQTT_GetPacketId( &(mqtt_obj->mqtt_context) );
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_subscribe - Acquired Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_subscribe - Acquired Mutex %p \n", mqtt_obj->process_mutex );
 
     /* Stop MQTT Ping Timer */
     result = stop_timer( mqtt_obj );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nstop_timer failed" );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nstop_timer failed\n" );
     }
 
     do
@@ -2577,7 +2711,7 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
                                      mqtt_obj->sent_packet_id );
         if( mqttStatus != MQTTSuccess )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nFailed to send SUBSCRIBE packet to broker with error = %s.",
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nFailed to send SUBSCRIBE packet to broker with error = %s.\n",
                              MQTT_Status_strerror( mqttStatus ) );
             result = CY_RSLT_MODULE_MQTT_SUBSCRIBE_FAIL;
         }
@@ -2597,7 +2731,7 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
                 mqttStatus = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_RECEIVE_DATA_TIMEOUT_MS );
                 if( mqttStatus != MQTTSuccess )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.", MQTT_Status_strerror( mqttStatus ) );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.\n", MQTT_Status_strerror( mqttStatus ) );
                     result = CY_RSLT_MODULE_MQTT_SUBSCRIBE_FAIL;
                     break;
                 }
@@ -2653,7 +2787,7 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
     timer_result = start_timer( mqtt_obj );
     if( timer_result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed with Error : [0x%X] ", (unsigned int)timer_result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed with Error : [0x%X] \n", (unsigned int)timer_result );
         goto exit;
     }
 
@@ -2666,12 +2800,12 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
     result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
         free( sub_list );
         return result;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_subscribe - Released Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_subscribe - Released Mutex %p \n", mqtt_obj->process_mutex );
     free( sub_list );
     return CY_RSLT_SUCCESS;
 
@@ -2765,11 +2899,11 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
     result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
         free( unsub_list );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_unsubscribe - Acquired Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_unsubscribe - Acquired Mutex %p \n", mqtt_obj->process_mutex );
 
     /* Generate the packet identifier for the UNSUBSCRIBE packet. */
     mqtt_obj->sent_packet_id = MQTT_GetPacketId( &(mqtt_obj->mqtt_context) );
@@ -2793,7 +2927,7 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
                                        mqtt_obj->sent_packet_id );
         if( mqttStatus != MQTTSuccess )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Failed to send UNSUBSCRIBE packet to broker with error = %s.",
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Failed to send UNSUBSCRIBE packet to broker with error = %s.\n",
                         MQTT_Status_strerror( mqttStatus ) );
             result = CY_RSLT_MODULE_MQTT_UNSUBSCRIBE_FAIL;
         }
@@ -2806,7 +2940,7 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
                 mqttStatus = MQTT_ProcessLoop( &(mqtt_obj->mqtt_context), CY_MQTT_RECEIVE_DATA_TIMEOUT_MS );
                 if( mqttStatus != MQTTSuccess )
                 {
-                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.", MQTT_Status_strerror( mqttStatus ) );
+                    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT_ProcessLoop returned with status = %s.\n", MQTT_Status_strerror( mqttStatus ) );
                     result = CY_RSLT_MODULE_MQTT_UNSUBSCRIBE_FAIL;
                     break;
                 }
@@ -2820,7 +2954,7 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
 
             if( mqtt_obj->unsub_ack_received == false )
             {
-                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nNot received unsuback before timeout %u millisecond ", (unsigned int)CY_MQTT_ACK_RECEIVE_TIMEOUT_MS );
+                cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nNot received unsuback before timeout %u millisecond \n", (unsigned int)CY_MQTT_ACK_RECEIVE_TIMEOUT_MS );
                 result = CY_RSLT_MODULE_MQTT_UNSUBSCRIBE_FAIL;
                 mqttStatus = MQTTRecvFailed; /* Assign error value to retry subscribe. */
             }
@@ -2832,7 +2966,7 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
     timer_result = start_timer( mqtt_obj );
     if( timer_result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed with Error : [0x%X] ", (unsigned int)timer_result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstart_timer failed with Error : [0x%X] \n", (unsigned int)timer_result );
         goto exit;
     }
 
@@ -2845,11 +2979,11 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
     result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
         free( unsub_list );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_unsubscribe - Released Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_unsubscribe - Released Mutex %p \n", mqtt_obj->process_mutex );
 
     /* Free unsub_list. */
     free( unsub_list );
@@ -2894,29 +3028,35 @@ cy_rslt_t cy_mqtt_disconnect( cy_mqtt_t mqtt_handle )
         return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Acquiring Mutex %p \n", mqtt_obj->process_mutex );
     result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Acquired Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Acquired Mutex %p \n", mqtt_obj->process_mutex );
 
     result = stop_timer( mqtt_obj );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_rtos_stop_timer failed" );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_rtos_stop_timer failed\n" );
+    }
+
+    result = stop_mqtt_ping_resp_timer( mqtt_obj );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nfailed to stop mqtt ping response timer\n" );
     }
 
     if( mqtt_obj->mqtt_conn_status == false )
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nMQTT client not connected..!\n" );
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Releasing Mutex %p ", mqtt_obj->process_mutex );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Releasing Mutex %p \n", mqtt_obj->process_mutex );
         result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
             return result;
         }
         return CY_RSLT_MODULE_MQTT_NOT_CONNECTED;
@@ -2926,7 +3066,7 @@ cy_rslt_t cy_mqtt_disconnect( cy_mqtt_t mqtt_handle )
     mqttStatus = MQTT_Disconnect( &(mqtt_obj->mqtt_context) );
     if( mqttStatus != MQTTSuccess )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Sending MQTT DISCONNECT failed with status=%s.",
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "Sending MQTT DISCONNECT failed with status=%s.\n",
                          MQTT_Status_strerror( mqttStatus ) );
         /*
          * In case of an unexpected network disconnection, the MQTT_Disconnect API always returns failure. Therefore,
@@ -2939,7 +3079,7 @@ cy_rslt_t cy_mqtt_disconnect( cy_mqtt_t mqtt_handle )
     result = cy_awsport_network_disconnect( &(mqtt_obj->network_context) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_disconnect failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_disconnect failed with Error : [0x%X] \n", (unsigned int)result );
         /*
          * In case of an unexpected network disconnection, the cy_awsport_network_disconnect API always returns failure. Therefore,
          * the return value of the cy_awsport_network_disconnect API is not checked here.
@@ -2950,7 +3090,7 @@ cy_rslt_t cy_mqtt_disconnect( cy_mqtt_t mqtt_handle )
     result = cy_awsport_network_delete( &(mqtt_obj->network_context) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_delete failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_delete failed with Error : [0x%X] \n", (unsigned int)result );
         /*
          * In case of an unexpected network disconnection, the cy_awsport_network_delete API always returns failure. Therefore,
          * the return value of the cy_awsport_network_delete API is not checked here.
@@ -2962,14 +3102,14 @@ cy_rslt_t cy_mqtt_disconnect( cy_mqtt_t mqtt_handle )
     /* Reset keepAliveSeconds to 0 to avoid timer activity after disconnection */
     mqtt_obj->keepAliveSeconds = 0;
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Releasing Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Releasing Mutex %p \n", mqtt_obj->process_mutex );
     result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Released Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_disconnect - Released Mutex %p \n", mqtt_obj->process_mutex );
 
     return result;
 }
@@ -3004,20 +3144,20 @@ cy_rslt_t cy_mqtt_delete( cy_mqtt_t mqtt_handle )
     result = cy_rtos_get_mutex( &mqtt_db_mutex, CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_delete - Acquired Mutex %p ", mqtt_db_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_delete - Acquired Mutex %p \n", mqtt_db_mutex );
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_delete - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_delete - Acquiring Mutex %p \n", mqtt_obj->process_mutex );
     result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
         result = cy_rtos_set_mutex( &mqtt_db_mutex );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         }
         return result;
     }
@@ -3026,27 +3166,33 @@ cy_rslt_t cy_mqtt_delete( cy_mqtt_t mqtt_handle )
     result = stop_timer( mqtt_obj );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nstop_timer failed" );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nstop_timer failed\n" );
     }
 
     result = cy_rtos_deinit_timer( &mqtt_obj->mqtt_timer );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_deinit_timer failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_deinit_timer failed with Error : [0x%X] \n", (unsigned int)result );
     }
+    result = cy_rtos_deinit_timer( &mqtt_obj->mqtt_ping_resp_timer );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_deinit_timer failed with Error : [0x%X] \n", (unsigned int)result );
+    }
+
 
     result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
         result = cy_rtos_set_mutex( &mqtt_db_mutex );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         }
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_delete - Released Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_delete - Released Mutex %p \n", mqtt_obj->process_mutex );
 
     (void)cy_rtos_deinit_mutex( &(mqtt_obj->process_mutex) );
 
@@ -3065,10 +3211,10 @@ cy_rslt_t cy_mqtt_delete( cy_mqtt_t mqtt_handle )
     result = cy_rtos_set_mutex( &mqtt_db_mutex );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_delete - Released Mutex %p ", mqtt_db_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_delete - Released Mutex %p \n", mqtt_db_mutex );
 
     return CY_RSLT_SUCCESS;
 }
@@ -3095,12 +3241,12 @@ cy_rslt_t cy_mqtt_deinit( void )
     result = cy_awsport_network_deinit();
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_deinit failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_awsport_network_deinit failed with Error : [0x%X] \n", (unsigned int)result );
         return result;
     }
     else
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_awsport_network_deinit successful." );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_awsport_network_deinit successful.\n" );
     }
 
     if( mqtt_event_process_thread != NULL )
@@ -3112,14 +3258,14 @@ cy_rslt_t cy_mqtt_deinit( void )
         result = cy_rtos_put_queue( &mqtt_event_queue, (void *)&event, CY_MQTT_EVENT_QUEUE_TIMEOUT_IN_MSEC, false );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nPushing event to terminate mqtt_event_processing_thread failed with Error : [0x%X] ", (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nPushing event to terminate mqtt_event_processing_thread failed with Error : [0x%X] \n", (unsigned int)result );
         }
 
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nJoining MQTT event process thread %p..!\n", mqtt_event_process_thread );
         result = cy_rtos_join_thread( &mqtt_event_process_thread );
         if( result != CY_RSLT_SUCCESS )
         {
-            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nJoin MQTT event process thread failed with Error : [0x%X] ", (unsigned int)result );
+            cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nJoin MQTT event process thread failed with Error : [0x%X] \n", (unsigned int)result );
             return result;
         }
         mqtt_event_process_thread = NULL;
@@ -3128,7 +3274,7 @@ cy_rslt_t cy_mqtt_deinit( void )
     result = cy_rtos_deinit_mutex( &mqtt_db_mutex );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_deinit_mutex failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_deinit_mutex failed with Error : [0x%X] \n", (unsigned int)result );
         return result;
     }
 
@@ -3137,12 +3283,12 @@ cy_rslt_t cy_mqtt_deinit( void )
     result = cy_rtos_deinit_queue( &mqtt_event_queue );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_deinit_queue failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_deinit_queue failed with Error : [0x%X] \n", (unsigned int)result );
         return result;
     }
     else
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_rtos_deinit_queue successful." );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_rtos_deinit_queue successful.\n" );
     }
 
     mqtt_lib_init_status = false;
@@ -3184,14 +3330,14 @@ cy_rslt_t cy_mqtt_register_event_callback( cy_mqtt_t mqtt_handle,
         return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Acquiring Mutex %p \n", mqtt_obj->process_mutex );
     result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Acquired Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Acquired Mutex %p \n", mqtt_obj->process_mutex );
 
     for ( i = 0; i < CY_MQTT_MAX_EVENT_CALLBACKS; i++ )
     {
@@ -3209,14 +3355,14 @@ cy_rslt_t cy_mqtt_register_event_callback( cy_mqtt_t mqtt_handle,
         return CY_RSLT_MODULE_MQTT_NOMEM;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Releasing Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Releasing Mutex %p \n", mqtt_obj->process_mutex );
     result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Released Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_register_event_callback - Released Mutex %p \n", mqtt_obj->process_mutex );
 
     return CY_RSLT_SUCCESS;
 }
@@ -3250,14 +3396,14 @@ cy_rslt_t cy_mqtt_deregister_event_callback( cy_mqtt_t mqtt_handle,
         return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Acquiring Mutex %p \n", mqtt_obj->process_mutex );
     result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_obj->process_mutex, (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Acquired Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Acquired Mutex %p \n", mqtt_obj->process_mutex );
 
     for ( i = 0; i < CY_MQTT_MAX_EVENT_CALLBACKS; i++ )
     {
@@ -3275,14 +3421,14 @@ cy_rslt_t cy_mqtt_deregister_event_callback( cy_mqtt_t mqtt_handle,
         return CY_RSLT_MODULE_MQTT_NOMEM;
     }
 
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Releasing Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Releasing Mutex %p \n", mqtt_obj->process_mutex );
     result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Released Mutex %p ", mqtt_obj->process_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_deregister_event_callback - Released Mutex %p \n", mqtt_obj->process_mutex );
 
     return CY_RSLT_SUCCESS;
 }
@@ -3305,10 +3451,10 @@ cy_rslt_t cy_mqtt_get_handle( cy_mqtt_t *mqtt_handle, char *descriptor )
     result = cy_rtos_get_mutex( &mqtt_db_mutex, CY_RTOS_NEVER_TIMEOUT );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_get_handle - Acquired Mutex %p ", mqtt_db_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_get_handle - Acquired Mutex %p \n", mqtt_db_mutex );
 
     while( handle_index < mqtt_handle_count )
     {
@@ -3335,10 +3481,10 @@ cy_rslt_t cy_mqtt_get_handle( cy_mqtt_t *mqtt_handle, char *descriptor )
     result = cy_rtos_set_mutex( &mqtt_db_mutex );
     if( result != CY_RSLT_SUCCESS )
     {
-        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_db_mutex, (unsigned int)result );
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", mqtt_db_mutex, (unsigned int)result );
         return result;
     }
-    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_get_handle - Released Mutex %p ", mqtt_db_mutex );
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_get_handle - Released Mutex %p \n", mqtt_db_mutex );
 
     return CY_RSLT_SUCCESS;
 }
