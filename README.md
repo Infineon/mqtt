@@ -73,6 +73,8 @@ Some of the key features include:
 
 - [XMC7200D-E272K8384 kit (KIT_XMC72_EVK_MUR_43439M2)](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc72_evk/)
 
+- [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-CYW43022CUB)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/)
+
 **Note:** Virtual APIs are supported on all PSoC 62 devices, but they have only been tested on the CY8CEVAL-062S2-MUR-43439M2 kit.
 
 ## Dependent libraries
@@ -91,6 +93,8 @@ If virtual APIs are to be used, it additionally depends on the [Virtual Connecti
 To pull wifi-core-freertos-lwip-mbedtls and mqtt libraries create the following *.mtb* files in deps folder.
    - *wifi-core-freertos-lwip-mbedtls.mtb:*
       `https://github.com/Infineon/wifi-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/wifi-core-freertos-lwip-mbedtls/latest-v1.X`
+               
+      **Note:** To use TLS version 1.3, please upgrade wifi-core-freertos-lwip-mbedtls to latest-v2.X (It is supported on all the platforms except [PSoC&trade; 64S0S2 Wi-Fi Bluetooth&reg; pioneer kit (CY8CKIT-064S0S2-4343W)](https://www.cypress.com/documentation/development-kitsboards/psoc-64-standard-secure-aws-wi-fi-bt-pioneer-kit-cy8ckit))
    - *mqtt.mtb:*
       `https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X`
 
@@ -98,6 +102,9 @@ To pull wifi-core-freertos-lwip-mbedtls and mqtt libraries create the following 
 To pull ethernet-core-freertos-lwip-mbedtls and mqtt libraries create the following *.mtb* files in deps folder.
    - *ethernet-core-freertos-lwip-mbedtls.mtb:*
       `https://github.com/Infineon/ethernet-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/ethernet-core-freertos-lwip-mbedtls/latest-v1.X`
+     
+     **Note:** To use TLS version 1.3, please upgrade ethernet-core-freertos-lwip-mbedtls to latest-v2.X
+     
    - *mqtt.mtb:*
       `https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X`
 

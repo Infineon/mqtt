@@ -10,8 +10,15 @@ See the [README.md](./README.md) for a complete description of the MQTT client l
 | Problem | Workaround |
 | ------- | ---------- |
 | IAR 9.30 toolchain throws build errors on Debug mode if the application explicitly includes the *iar_dlmalloc.h* file | Add `--advance-heap` to LDFLAGS in the application Makefile. |
+| MQTT connection fails over TLS 1.3 with brokers that enabled session tickets. For example, MQTT Eclipse broker ("mqtt.eclipseprojects.io") | Currently there is no workaround as there is a bug in Mbed TLS library in session ticket parsing logic. |
 
 ## Changelog
+
+### v4.3.0
+
+- Supports Mbed TLS version 3.4.0
+- Supports MQTT connection with TLS version 1.3
+- Added support for CY8CEVAL-062S2-CYW43022CUB kit
 
 ### v4.2.0
 
