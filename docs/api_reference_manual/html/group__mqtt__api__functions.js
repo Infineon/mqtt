@@ -12,5 +12,8 @@ var group__mqtt__api__functions =
     [ "cy_mqtt_unsubscribe", "group__mqtt__api__functions.html#ga5bf4f13c41463bd239f2940a02401121", null ],
     [ "cy_mqtt_disconnect", "group__mqtt__api__functions.html#gab7be772e82d3f8a80e1cbb1da156be17", null ],
     [ "cy_mqtt_delete", "group__mqtt__api__functions.html#gacdd40da0ad0e6bfb55fbf14c2aca0577", null ],
-    [ "cy_mqtt_deinit", "group__mqtt__api__functions.html#ga7193aa962b03640955740db074fb36fb", null ]
+    [ "cy_mqtt_deinit", "group__mqtt__api__functions.html#ga7193aa962b03640955740db074fb36fb", null ],
+    [ "cy_mqtt_stop_keepalive", "group__mqtt__api__functions.html#ga10f7a547829e5646d52365c84029ed74", null ],
+    [ "cy_mqtt_start_keepalive", "group__mqtt__api__functions.html#ga511f7bf232ee391e035f06d146884910", null ],
+    [ "cy_mqtt_get_socket", "group__mqtt__api__functions.html#ga9f63eb538b532e08541aed7d9dd26163", null ]
 ];

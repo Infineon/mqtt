@@ -1,5 +1,5 @@
 /*
- * Copyright 2023, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2024, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -3485,6 +3485,129 @@ cy_rslt_t cy_mqtt_get_handle( cy_mqtt_t *mqtt_handle, char *descriptor )
         return result;
     }
     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_get_handle - Released Mutex %p \n", mqtt_db_mutex );
+
+    return CY_RSLT_SUCCESS;
+}
+
+cy_rslt_t cy_mqtt_stop_keepalive( cy_mqtt_t mqtt_handle )
+{
+    cy_rslt_t         result = CY_RSLT_SUCCESS;
+    cy_mqtt_object_t  *mqtt_obj;
+
+    if( mqtt_handle == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_stop_keepalive()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
+
+    if( is_mqtt_obj_valid( mqtt_obj ) == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT object..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
+    }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_stop_keepalive - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        return result;
+    }
+
+    /* Stop the MQTT Ping timer if still running and deinit timer */
+    result = stop_timer( mqtt_obj );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nstop_timer failed" );
+    }
+
+    result = cy_rtos_stop_timer( &mqtt_obj->mqtt_ping_resp_timer );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nPing response timer stop failed\n" );
+    }
+
+    result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
+        return result;
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nncy_mqtt_stop_keepalive - Released Mutex %p ", mqtt_obj->process_mutex );
+
+    return CY_RSLT_SUCCESS;
+}
+
+cy_rslt_t cy_mqtt_start_keepalive( cy_mqtt_t mqtt_handle )
+{
+    cy_rslt_t         result = CY_RSLT_SUCCESS;
+    cy_mqtt_object_t  *mqtt_obj;
+
+    if( mqtt_handle == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nBad arguments to cy_mqtt_stop_keepalive()..!\n" );
+        return CY_RSLT_MODULE_MQTT_BADARG;
+    }
+
+    mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
+
+    if( is_mqtt_obj_valid( mqtt_obj ) == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT object..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
+    }
+
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\ncy_mqtt_stop_keepalive - Acquiring Mutex %p ", mqtt_obj->process_mutex );
+    result = cy_rtos_get_mutex( &(mqtt_obj->process_mutex), CY_RTOS_NEVER_TIMEOUT );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] ", mqtt_obj->process_mutex, (unsigned int)result );
+        return result;
+    }
+
+    /* Stop the MQTT Ping timer if still running and deinit timer */
+    result = start_timer( mqtt_obj );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nstop_timer failed" );
+    }
+
+    result = stop_mqtt_ping_resp_timer( mqtt_obj );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nstop mqtt ping resp timer failed\n" );
+    }
+
+    result = cy_rtos_set_mutex( &(mqtt_obj->process_mutex) );
+    if( result != CY_RSLT_SUCCESS )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_set_mutex for Mutex %p failed with Error : [0x%X] \n", (unsigned int)result );
+        return result;
+    }
+    cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_DEBUG, "\nncy_mqtt_stop_keepalive - Released Mutex %p ", mqtt_obj->process_mutex );
+
+    return CY_RSLT_SUCCESS;
+}
+
+cy_rslt_t cy_mqtt_get_socket(cy_mqtt_t mqtt_handle, cy_socket_t *socket)
+{
+    cy_mqtt_object_t *mqtt_obj = (cy_mqtt_object_t *)mqtt_handle;
+
+    if( mqtt_handle == NULL )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT handle..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
+    }
+
+    if( is_mqtt_obj_valid( mqtt_obj ) == false )
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\nInvalid MQTT object..!\n" );
+        return CY_RSLT_MODULE_MQTT_INVALID_HANDLE;
+    }
+
+    *socket = mqtt_obj->network_context.handle;
 
     return CY_RSLT_SUCCESS;
 }

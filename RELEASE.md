@@ -9,10 +9,14 @@ See the [README.md](./README.md) for a complete description of the MQTT client l
 
 | Problem | Workaround |
 | ------- | ---------- |
-| IAR 9.30 toolchain throws build errors on Debug mode if the application explicitly includes the *iar_dlmalloc.h* file | Add `--advance-heap` to LDFLAGS in the application Makefile. |
+| IAR 9.40.2 toolchain throws build errors on Debug mode if the application explicitly includes the *iar_dlmalloc.h* file | Add `--advanced_heap` to LDFLAGS in the application Makefile. |
 | MQTT connection fails over TLS 1.3 with brokers that enabled session tickets. For example, MQTT Eclipse broker ("mqtt.eclipseprojects.io") | Currently there is no workaround as there is a bug in Mbed TLS library in session ticket parsing logic. |
 
 ## Changelog
+
+### v4.4.0
+
+- Added new APIs to start and stop MQTT keep-alive, and to get the socket handle associated with MQTT connection.
 
 ### v4.3.0
 
@@ -133,8 +137,8 @@ This version of the library was validated for compatibility with the following s
 
 | Software and tools                                             | Version |
 | :---                                                           | :----:  |
-| ModusToolbox&trade; software environment                       | 3.1     |
-| ModusToolbox&trade; device configurator                        | 4.10    |
+| ModusToolbox&trade; software environment                       | 3.2     |
+| ModusToolbox&trade; device configurator                        | 4.20    |
 | GCC compiler                                                   | 11.3.1  |
-| IAR compiler                                                   | 9.30    |
+| IAR compiler                                                   | 9.40.2  |
 | Arm&reg; compiler 6                                            | 6.16    |

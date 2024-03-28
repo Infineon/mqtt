@@ -114,19 +114,21 @@ To pull ethernet-core-freertos-lwip-mbedtls and mqtt libraries create the follow
 
 5. By default, [AWS IoT device SDK](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00) library logging is turned off. To enable log messages, map the logging-related macros `LogError`, `LogWarn`, `LogInfo`, and `LogDebug` in *./include/core_mqtt_config.h* to the application-specific logging implementation.
 
-6. Define the following macros in the application Makefile with values to suit the use case and network conditions:
+6. Copy core_mqtt_config.h from *./include* folder to the top-level code example directory and modify following macros with values to suit the use case and network conditions:
 
-   Macro | Description | Example
-   ------|-------------|-------
-   `CY_MQTT_ACK_RECEIVE_TIMEOUT_MS` | A "reasonable amount of time" (timeout value) to wait for receiving the acknowledgment packet from the MQTT broker for MQTT publish/subscribe messages with QoS1/QoS2 | `DEFINES += CY_MQTT_ACK_RECEIVE_TIMEOUT_MS=3000`
-   `CY_MQTT_MESSAGE_SEND_TIMEOUT_MS` | MQTT message send timeout | `DEFINES += CY_MQTT_MESSAGE_SEND_TIMEOUT_MS=3000`
-   `CY_MQTT_MESSAGE_RECEIVE_TIMEOUT_MS` | MQTT message receive timeout | `DEFINES += CY_MQTT_MESSAGE_RECEIVE_TIMEOUT_MS=500`
-   `CY_MQTT_MAX_RETRY_VALUE` | MQTT library retry mechanism for MQTT publish/subscribe/unsubscribe messages if the acknowledgement is not received from the broker on time. You can configure the maximum number of retries. | `DEFINES += CY_MQTT_MAX_RETRY_VALUE=3`
-   `CY_MQTT_MAX_OUTGOING_PUBLISHES` | To perform multiple publish operations simultaneously on a single MQTT instance, configure the `CY_MQTT_MAX_OUTGOING_PUBLISHES` macro with the number of simultaneous publish operations to be performed. For the default value of this macro, see the MQTT library API header file. This macro can be configured by adding a define in the application Makefile. | `DEFINES += CY_MQTT_MAX_OUTGOING_PUBLISHES=2`
-   `CY_MQTT_MAX_OUTGOING_SUBSCRIBES` | To perform multiple subscribe operations simultaneously on a single MQTT instance, configure hte `CY_MQTT_MAX_OUTGOING_SUBSCRIBES` macro with the number of simultaneous subscribe operations to be performed. For the default value of this macro, see the MQTT library API header file. This macro can be configured by adding a define in the application Makefile. | `DEFINES += CY_MQTT_MAX_OUTGOING_SUBSCRIBES=2`
-   `MQTT_PINGRESP_TIMEOUT_MS` | A "reasonable amount of time" (timeout value) to wait for the keepalive response from the MQTT broker | `DEFINES += MQTT_PINGRESP_TIMEOUT_MS=5000`
-   `MQTT_RECV_POLLING_TIMEOUT_MS` | A "maximum polling duration" that is allowed without any data reception from the network for the incoming packet | `DEFINES += MQTT_RECV_POLLING_TIMEOUT_MS=1000`
-   `MQTT_SEND_RETRY_TIMEOUT_MS` | A "maximum duration" that is allowed for no data transmission over the network through the transport send function | `DEFINES += MQTT_SEND_RETRY_TIMEOUT_MS=500`
+   Macro | Description |
+   ------|-------------|
+   `CY_MQTT_ACK_RECEIVE_TIMEOUT_MS` | A "reasonable amount of time" (timeout value) to wait for receiving the acknowledgment packet from the MQTT broker for MQTT publish/subscribe messages with QoS1/QoS2
+   `CY_MQTT_MESSAGE_SEND_TIMEOUT_MS` | MQTT message send timeout
+   `CY_MQTT_MESSAGE_RECEIVE_TIMEOUT_MS` | MQTT message receive timeout
+   `CY_MQTT_MAX_RETRY_VALUE` | MQTT library retry mechanism for MQTT publish/subscribe/unsubscribe messages if the acknowledgement is not received from the broker on time. You can configure the maximum number of retries.
+   `CY_MQTT_MAX_OUTGOING_PUBLISHES` | To perform multiple publish operations simultaneously on a single MQTT instance, configure the `CY_MQTT_MAX_OUTGOING_PUBLISHES` macro with the number of simultaneous publish operations to be performed. For the default value of this macro, see the MQTT library API header file. This macro can be configured by adding a define in the application Makefile.
+   `CY_MQTT_MAX_OUTGOING_SUBSCRIBES` | To perform multiple subscribe operations simultaneously on a single MQTT instance, configure hte `CY_MQTT_MAX_OUTGOING_SUBSCRIBES` macro with the number of simultaneous subscribe operations to be performed. For the default value of this macro, see the MQTT library API header file. This macro can be configured by adding a define in the application Makefile.
+   `MQTT_PINGRESP_TIMEOUT_MS` | A "reasonable amount of time" (timeout value) to wait for the keepalive response from the MQTT broker
+   `MQTT_RECV_POLLING_TIMEOUT_MS` | A "maximum polling duration" that is allowed without any data reception from the network for the incoming packet
+   `MQTT_SEND_RETRY_TIMEOUT_MS` | A "maximum duration" that is allowed for no data transmission over the network through the transport send function
+   `MQTT_MAX_CONNACK_RECEIVE_RETRY_COUNT` | Number of retries for receiving CONNACK
+   `MQTT_STATE_ARRAY_MAX_COUNT` | A maximum number of MQTT PUBLISH messages, pending acknowledgment at a time, that are supported for incoming and outgoing direction of messages, separately.
 <br>
 
 **Note:** It is important to note that having the `MQTT_RECV_POLLING_TIMEOUT_MS` timeout as too short will result in MQTT being disconnected due to the possibility of partial data being received. If you have small TCP buffers and a high-latency network, the optimum value for the timeout can be surprisingly long. In such cases, the optimum value for timeout can be better determined based on experimenting the MQTT applications with payloads bigger than the TCP buffer. See [AWS coreMQTT documentation](https://docs.aws.amazon.com/embedded-csdk/202103.00/lib-ref/libraries/standard/coreMQTT/docs/doxygen/output/html/mqtt_timeouts.html#mqtt_timeouts_receive_polling) for more details.<br>

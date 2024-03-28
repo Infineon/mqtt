@@ -1,5 +1,5 @@
 /*
- * Copyright 2023, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2024, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -57,7 +57,9 @@
  * <b>Possible values:</b> Any positive 32 bit integer. <br>
  * <b>Default value:</b> `10`
  */
+#ifndef MQTT_STATE_ARRAY_MAX_COUNT
 #define MQTT_STATE_ARRAY_MAX_COUNT    ( 10U )
+#endif
 
 /**
  * @brief The number of retries for receiving CONNACK.
@@ -71,7 +73,9 @@
  * <b>Possible values:</b> Any positive 16 bit integer. <br>
  * <b>Default value:</b> `5`
  */
+#ifndef MQTT_MAX_CONNACK_RECEIVE_RETRY_COUNT
 #define MQTT_MAX_CONNACK_RECEIVE_RETRY_COUNT    ( 5U )
+#endif
 
 /**
  * @brief Number of milliseconds to wait for a ping response to a ping

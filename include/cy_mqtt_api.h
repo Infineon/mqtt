@@ -1,5 +1,5 @@
 /*
- * Copyright 2023, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2024, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -296,7 +296,8 @@ typedef enum cy_mqtt_qos
 typedef enum cy_mqtt_event_type
 {
     CY_MQTT_EVENT_TYPE_SUBSCRIPTION_MESSAGE_RECEIVE = 0, /**< Message from the subscribed topic. */
-    CY_MQTT_EVENT_TYPE_DISCONNECT                   = 1  /**< Disconnected from MQTT broker. */
+    CY_MQTT_EVENT_TYPE_DISCONNECT                   = 1, /**< Disconnected from MQTT broker. */
+    CY_MQTT_EVENT_TYPE_PINGRESP                     = 2  /** Ping response packet */
 } cy_mqtt_event_type_t;
 
 /**
@@ -624,6 +625,37 @@ cy_rslt_t cy_mqtt_delete( cy_mqtt_t mqtt_handle );
  * @return cy_rslt_t         : CY_RSLT_SUCCESS on success; error codes in @ref mqtt_defines otherwise.
  */
 cy_rslt_t cy_mqtt_deinit( void );
+
+/**
+ * This API will stop monitoring the keep-alive intervals and does not send keep-alive request for the configured interval.
+ * This API can be used to stop sending keepalive request packets from host when MQTT keepalive is offloaded to WLAN FW.
+ *
+ * @param mqtt_handle [in]   : MQTT handle created using \ref cy_mqtt_create.
+ *
+ * @return cy_rslt_t         : CY_RSLT_SUCCESS on success; error codes in @ref mqtt_defines otherwise.
+ */
+cy_rslt_t cy_mqtt_stop_keepalive( cy_mqtt_t mqtt_handle );
+
+/**
+ * This API will start monitoring the keep-alive intervals and start sending keep-alive request for the configured interval.
+ * User need to invoke this API only if he has called \ref cy_mqtt_stop_keepalive.
+ *
+ * @param mqtt_handle [in]   : MQTT handle created using \ref cy_mqtt_create.
+ *
+ * @return cy_rslt_t         : CY_RSLT_SUCCESS on success; error codes in @ref mqtt_defines otherwise.
+ */
+cy_rslt_t cy_mqtt_start_keepalive( cy_mqtt_t mqtt_handle );
+
+/**
+ * This API will return the socket handle for the given MQTT handle which is used to get socket
+ * info like local and peer IP address and port.
+ *
+ * @param mqtt_handle [in]   : MQTT handle created using \ref cy_mqtt_create.
+ * @param socket      [out]  : Pointer to store the socket handle for given MQTT handle created using \ref cy_mqtt_create.
+ *
+ * @return cy_rslt_t         : CY_RSLT_SUCCESS on success; error codes in @ref mqtt_defines otherwise.
+ */
+cy_rslt_t cy_mqtt_get_socket(cy_mqtt_t mqtt_handle, cy_socket_t *socket);
 
 /**
  * @}
