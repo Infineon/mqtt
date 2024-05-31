@@ -138,6 +138,7 @@ Supported platforms</h1>
 <li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc72_evk/">XMC7200D-E272K8384 kit (KIT-XMC72-EVK)</a></li>
 <li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc72_evk/">XMC7200D-E272K8384 kit (KIT_XMC72_EVK_MUR_43439M2)</a></li>
 <li><a href="https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/">PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-CYW43022CUB)</a></li>
+<li><a href="https://www.infineon.com/CYW955913EVK-01">CYW955913EVK-01 Wi-Fi Bluetooth&reg; Prototyping Kit (CYW955913EVK-01)</a></li>
 </ul>
 <dl class="section note"><dt>Note</dt><dd>Virtual APIs are supported on all PSoC 62 devices, but they have only been tested on the CY8CEVAL-062S2-MUR-43439M2 kit.</dd></dl>
 <h1><a class="anchor" id="section_dependencies"></a>
@@ -151,6 +152,11 @@ Quick start</h1>
 <ul>
 <li>To use mqtt library with Wi-Fi kits on FreeRTOS, lwIP, and Mbed TLS combination, the application should pull <a href="https://github.com/Infineon/mqtt">mqtt</a> library and <a href="https://github.com/Infineon/wifi-core-freertos-lwip-mbedtls">wifi-core-freertos-lwip-mbedtls</a> library which will internally pull secure-sockets, wifi-connection-manager, FreeRTOS, lwIP, Mbed TLS and other dependent modules. To pull wifi-core-freertos-lwip-mbedtls and mqtt libraries create the following <em>.mtb</em> files in deps folder.<ul>
 <li>wifi-core-freertos-lwip-mbedtls.mtb: <a href="https://github.com/Infineon/wifi-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/wifi-core-freertos-lwip-mbedtls/latest-v1.X">https://github.com/Infineon/wifi-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/wifi-core-freertos-lwip-mbedtls/latest-v1.X</a></li>
+<li>mqtt.mtb: <a href="https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X">https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X</a></li>
+</ul>
+</li>
+<li>To use mqtt library with CYW955913EVK-01 kit, the application should pull <a href="https://github.com/Infineon/mqtt">mqtt</a> library and <a href="https://github.com/Infineon/wifi-core-threadx-cat5">wifi-core-threadx-cat5</a> library which will internally pull secure-sockets, wifi-connection-manager and other dependent modules. To pull wifi-core-threadx-cat5 and mqtt libraries create the following *.mtb* files in deps folder.<ul>
+<li>wifi-core-threadx-cat5.mtb: <a href="https://github.com/Infineon/wifi-core-threadx-cat5#latest-v1.X#$$ASSET_REPO$$/wifi-core-threadx-cat5/latest-v1.X">https://github.com/Infineon/wifi-core-threadx-cat5#latest-v1.X#$$ASSET_REPO$$/wifi-core-threadx-cat5/latest-v1.X</a></li>
 <li>mqtt.mtb: <a href="https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X">https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X</a></li>
 </ul>
 </li>
@@ -195,11 +201,14 @@ Quick start</h1>
 <li>This MQTT Client library does not support secure connections to the public <code>test.mosquitto.org</code> broker by default. This is because the server uses the SHA1 hashing algorithm. As cautioned by Mbed TLS, SHA-1 is considered a weak message digest and is therefore not enabled in Mbed TLS by default. The use of SHA-1 for certificate signing constitutes a security risk. It is recommended to avoid dependencies on it, and consider stronger message digests instead.</li>
 <li>Review and make the required changes to the pre-defined configuration files.<ul>
 <li>The configuration files are bundled with the wifi-mw-core library for FreeRTOS, lwIP, and Mbed TLS. See <a href="https://github.com/Infineon/wifi-mw-core/blob/master/README.md">README.md</a> for more details.</li>
-<li>If the application uses the bundle library, the configuration files are in the bundle library. For example, if the application uses the <em>Wi-Fi core FreeRTOS lwIP Mbed TLS bundle library</em>, the configuration files are in the <em>wifi-core-freertos-lwip-mbedtls/configs</em> folder. Similarly, if the application uses the <em>Ethernet Core FreeRTOS lwIP Mbed TLS library</em>, the configuration files are in the <em>ethernet-core-freertos-lwip-mbedtls/configs</em> folder.</li>
+<li>If the application uses the bundle library, the configuration files are in the bundle library. For example, if the application uses the <em>Wi-Fi core FreeRTOS lwIP Mbed TLS bundle library</em>, the configuration files are in the <em>wifi-core-freertos-lwip-mbedtls/configs</em> folder. Similarly, if the application uses the <em>Ethernet Core FreeRTOS lwIP Mbed TLS library</em>, the configuration files are in the <em>ethernet-core-freertos-lwip-mbedtls/configs</em> folder. <dl class="section note"><dt>Note</dt><dd>Configuration file changes are not required for CYW955913EVK-01.</dd></dl>
+</li>
 </ul>
 </li>
-<li>Define the following COMPONENTS in the application's Makefile for the MQTT library. <div class="fragment"><div class="line">COMPONENTS=FREERTOS MBEDTLS LWIP SECURE_SOCKETS</div>
-</div><!-- fragment --></li>
+<li><p class="startli">Define the following COMPONENTS in the application's Makefile for the MQTT library. </p><div class="fragment"><div class="line">COMPONENTS=FREERTOS MBEDTLS LWIP SECURE_SOCKETS</div>
+</div><!-- fragment --><dl class="section note"><dt>Note</dt><dd>For CYW955913EVK-01 only the following COMPONENTS are required. <div class="fragment"><div class="line">COMPONENTS=SECURE_SOCKETS</div>
+</div><!-- fragment --></dd></dl>
+</li>
 <li>The "aws-iot-device-sdk-port" layer includes the "coreHTTP" and "coreMQTT" modules of the "aws-iot-device-sdk-embedded-C" library by default. If the user application doesn't use HTTP client features, update the application Makefile to exclude the coreHTTP source files from the build. The Makefile entry should look like the following: <div class="fragment"><div class="line">CY_IGNORE+= $(SEARCH_aws-iot-device-sdk-embedded-C)/libraries/standard/coreHTTP</div>
 </div><!-- fragment --></li>
 <li>The MQTT library is supported on multiple platforms. When it is used on secured platforms such as CY8CKIT-064S0S2-4343W, the macros <code>CY_TFM_PSA_SUPPORTED</code> and <code>TFM_MULTI_CORE_NS_OS</code> need to be defined in the application Makefile. The Makefile entry should look like the following: <div class="fragment"><div class="line">DEFINES += CY_TFM_PSA_SUPPORTED TFM_MULTI_CORE_NS_OS</div>

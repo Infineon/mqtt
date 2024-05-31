@@ -14,6 +14,10 @@ See the [README.md](./README.md) for a complete description of the MQTT client l
 
 ## Changelog
 
+### v4.5.0
+
+- Added support for CYW955913EVK-01 kit
+
 ### v4.4.0
 
 - Added new APIs to start and stop MQTT keep-alive, and to get the socket handle associated with MQTT connection.

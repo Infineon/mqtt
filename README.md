@@ -75,6 +75,8 @@ Some of the key features include:
 
 - [PSoC&trade; 62S2 evaluation kit (CY8CEVAL-062S2-CYW43022CUB)](https://www.infineon.com/cms/en/product/evaluation-boards/cy8ceval-062s2/)
 
+- [CYW955913EVK-01 Wi-Fi Bluetooth&reg; Prototyping Kit (CYW955913EVK-01)](https://www.infineon.com/CYW955913EVK-01)
+
 **Note:** Virtual APIs are supported on all PSoC 62 devices, but they have only been tested on the CY8CEVAL-062S2-MUR-43439M2 kit.
 
 ## Dependent libraries
@@ -98,7 +100,15 @@ To pull wifi-core-freertos-lwip-mbedtls and mqtt libraries create the following 
    - *mqtt.mtb:*
       `https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X`
 
-2. To use mqtt library with Ethernet kits on FreeRTOS, lwIP, and Mbed TLS combination, the application should pull [mqtt]( https://github.com/Infineon/mqtt ) library and [ethernet-core-freertos-lwip-mbedtls]( https://github.com/Infineon/ethernet-core-freertos-lwip-mbedtls ) library which will internally pull secure-sockets, ethernet-connection-manager, FreeRTOS, lwIP, Mbed TLS and other dependent modules.
+2. To use mqtt library with CYW955913EVK-01 kit, the application should pull [mqtt]( https://github.com/Infineon/mqtt ) library and [wifi-core-threadx-cat5]( https://github.com/Infineon/wifi-core-threadx-cat5 ) library which will internally pull secure-sockets, wifi-connection-manager and other dependent modules.
+To pull wifi-core-threadx-cat5 and mqtt libraries create the following *.mtb* files in deps folder.
+   - *wifi-core-threadx-cat5.mtb:*
+      `https://github.com/Infineon/wifi-core-threadx-cat5#latest-v1.X#$$ASSET_REPO$$/wifi-core-threadx-cat5/latest-v1.X`
+
+   - *mqtt.mtb:*
+      `https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X`
+
+3. To use mqtt library with Ethernet kits on FreeRTOS, lwIP, and Mbed TLS combination, the application should pull [mqtt]( https://github.com/Infineon/mqtt ) library and [ethernet-core-freertos-lwip-mbedtls]( https://github.com/Infineon/ethernet-core-freertos-lwip-mbedtls ) library which will internally pull secure-sockets, ethernet-connection-manager, FreeRTOS, lwIP, Mbed TLS and other dependent modules.
 To pull ethernet-core-freertos-lwip-mbedtls and mqtt libraries create the following *.mtb* files in deps folder.
    - *ethernet-core-freertos-lwip-mbedtls.mtb:*
       `https://github.com/Infineon/ethernet-core-freertos-lwip-mbedtls#latest-v1.X#$$ASSET_REPO$$/ethernet-core-freertos-lwip-mbedtls/latest-v1.X`
@@ -108,13 +118,13 @@ To pull ethernet-core-freertos-lwip-mbedtls and mqtt libraries create the follow
    - *mqtt.mtb:*
       `https://github.com/Infineon/mqtt#latest-v4.X#$$ASSET_REPO$$/mqtt/latest-v4.X`
 
-3. Ensure that the application includes *./include/cy_mqtt_api.h* to use the library APIs and structure.
+4. Ensure that the application includes *./include/cy_mqtt_api.h* to use the library APIs and structure.
 
-4. The referenced file *./include/core_mqtt_config.h* that is bundled with this library provides the default configurations required for the [AWS IoT device SDK](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00) library.
+5. The referenced file *./include/core_mqtt_config.h* that is bundled with this library provides the default configurations required for the [AWS IoT device SDK](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00) library.
 
-5. By default, [AWS IoT device SDK](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00) library logging is turned off. To enable log messages, map the logging-related macros `LogError`, `LogWarn`, `LogInfo`, and `LogDebug` in *./include/core_mqtt_config.h* to the application-specific logging implementation.
+6. By default, [AWS IoT device SDK](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00) library logging is turned off. To enable log messages, map the logging-related macros `LogError`, `LogWarn`, `LogInfo`, and `LogDebug` in *./include/core_mqtt_config.h* to the application-specific logging implementation.
 
-6. Copy core_mqtt_config.h from *./include* folder to the top-level code example directory and modify following macros with values to suit the use case and network conditions:
+7. Copy core_mqtt_config.h from *./include* folder to the top-level code example directory and modify following macros with values to suit the use case and network conditions:
 
    Macro | Description |
    ------|-------------|
@@ -133,16 +143,22 @@ To pull ethernet-core-freertos-lwip-mbedtls and mqtt libraries create the follow
 
 **Note:** It is important to note that having the `MQTT_RECV_POLLING_TIMEOUT_MS` timeout as too short will result in MQTT being disconnected due to the possibility of partial data being received. If you have small TCP buffers and a high-latency network, the optimum value for the timeout can be surprisingly long. In such cases, the optimum value for timeout can be better determined based on experimenting the MQTT applications with payloads bigger than the TCP buffer. See [AWS coreMQTT documentation](https://docs.aws.amazon.com/embedded-csdk/202103.00/lib-ref/libraries/standard/coreMQTT/docs/doxygen/output/html/mqtt_timeouts.html#mqtt_timeouts_receive_polling) for more details.<br>
 
-7. Review and make the required changes to the pre-defined configuration files.
+8. Review and make the required changes to the pre-defined configuration files.
 
    The configuration files are bundled with the wifi-mw-core library for FreeRTOS, lwIP, and Mbed TLS. See [README.md]( https://github.com/Infineon/wifi-mw-core/blob/master/README.md ) for details.
 
    If the application uses the bundle library, the configuration files are in the bundle library. For example, if the application uses the **Wi-Fi core freertos lwip mbedtls bundle library**, the configuration files are in the *wifi-core-freertos-lwip-mbedtls/configs* folder. Similarly, if the application uses the **Ethernet Core FreeRTOS lwIP mbedtls library**, the configuration files are in the *ethernet-core-freertos-lwip-mbedtls/configs* folder.
+   
+   **Note:** Configuration file changes are not required for CYW955913EVK-01.
 
 8. Define the following COMPONENTS in the application's Makefile for the Azure port library.
     ```
     COMPONENTS=FREERTOS MBEDTLS LWIP SECURE_SOCKETS
     ```
+    **Note:** For CYW955913EVK-01 only the following COMPONENTS are required.
+              ```
+              COMPONENTS=SECURE_SOCKETS
+              ```
 
 9. The 'aws-iot-device-sdk-port' layer includes the 'coreHTTP' and 'coreMQTT' modules of the 'aws-iot-device-sdk-embedded-C' library by default. If the user application does not use HTTP client features, update the application Makefile to exclude the coreHTTP source files from the build. The Makefile entry should look like as follows:
     ```
@@ -293,4 +309,4 @@ Do the following to establish a connection with the broker using credentials sto
 
 - [AWS-IoT device SDK library]( https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/202103.00 )
 
-- [ModusToolbox&trade; code examples]( https://github.com/Infineon?q=mtb-example-anycloud%20NOT%20Deprecated )
+- [ModusToolbox&trade; code examples]( https://github.com/Infineon/Code-Examples-for-ModusToolbox-Software )
