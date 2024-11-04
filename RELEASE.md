@@ -14,6 +14,10 @@ See the [README.md](./README.md) for a complete description of the MQTT client l
 
 ## Changelog
 
+### v4.6.1
+
+- Minor bug fixes
+
 ### v4.6.0
 
 - Added support for CY8CEVAL-062S2-CYW955513SDM2WLIPA kit
