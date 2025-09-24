@@ -1,5 +1,5 @@
 /*
- * Copyright 2024, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2025, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -52,7 +52,14 @@
 
 #include "cy_mqtt_api_internal.h"
 #include "cy_vcm_internal.h"
+#if defined (COMPONENT_MTB_HAL)
+#include "mtb_ipc.h"
+#else
 #include "cyhal_ipc.h"
+#endif
+#if defined(COMPONENT_PSE84)
+#define CY_MQTT_MEMORY_BYTE_ALIGNMENT   CY_VCM_MEMORY_BYTE_ALIGNMENT
+#endif
 
 typedef struct mqtt_cb_data_base
 {
@@ -83,8 +90,13 @@ static void virtual_event_handler(void *arg)
     {
         cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\ncy_rtos_get_mutex for Mutex %p failed with Error : [0x%X] \n", cb_database_mutex, (unsigned int)res );
         /* Freeing the memory allocated in local_mqtt_event_cb function in VCM */
+#if defined(COMPONENT_PSE84)
+        cy_vcm_free((void*)mqtt_event_params->payload_base_ptr);
+        cy_vcm_free((void*)mqtt_event_params->topic_base_ptr);
+#else
         cy_vcm_free((void*)mqtt_event_params->event.data.pub_msg.received_message.payload);
         cy_vcm_free((void*)mqtt_event_params->event.data.pub_msg.received_message.topic);
+#endif
         return;
     }
 
@@ -102,8 +114,13 @@ static void virtual_event_handler(void *arg)
     }
 
     /* Freeing the memory allocated in local_mqtt_event_cb function in VCM */
+#if defined(COMPONENT_PSE84)
+    cy_vcm_free((void*)mqtt_event_params->payload_base_ptr);
+    cy_vcm_free((void*)mqtt_event_params->topic_base_ptr);
+#else
     cy_vcm_free((void*)mqtt_event_params->event.data.pub_msg.received_message.payload);
     cy_vcm_free((void*)mqtt_event_params->event.data.pub_msg.received_message.topic);
+#endif
 
     res = cy_rtos_set_mutex( &cb_database_mutex );
     if( res != CY_RSLT_SUCCESS )
@@ -420,6 +437,10 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
     cy_rslt_t *api_res = NULL;
     cy_vcm_request_t api_req;
     cy_vcm_response_t api_resp;
+#if defined(COMPONENT_PSE84)
+    uint32_t aligned_size, alloc_size;
+    uint32_t *topic_base_ptr_32, *topic_actual_ptr_32, *payload_base_ptr_32, *payload_actual_ptr_32;
+#endif
     CY_SECTION_SHAREDMEM
     static cy_mqtt_publish_params_t params;
     CY_SECTION_SHAREDMEM
@@ -438,6 +459,45 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
     }
 
     memcpy(&(_pubmsg), pubmsg, sizeof(cy_mqtt_publish_info_t));
+
+#if defined(COMPONENT_PSE84)
+    /* Determine the minimum 32 byte aligned memory size that is needed to fit the topic_len */
+    aligned_size = pubmsg->topic_len + (CY_MQTT_MEMORY_BYTE_ALIGNMENT - (pubmsg->topic_len % CY_MQTT_MEMORY_BYTE_ALIGNMENT));
+    /* Add additional 32 bytes to facilitate moving of the start of topic pointer to a location which is 32 byte aligned */
+    alloc_size = aligned_size + CY_MQTT_MEMORY_BYTE_ALIGNMENT;
+    topic_base_ptr_32 = (uint32_t*)malloc(alloc_size);
+    if(topic_base_ptr_32 == NULL)
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n No memory available. malloc failed. \n" );
+    }
+    memset((void*)topic_base_ptr_32, 0, alloc_size);
+    topic_actual_ptr_32 = (uint32_t*)((uint32_t)topic_base_ptr_32 + ( CY_MQTT_MEMORY_BYTE_ALIGNMENT - ((uint32_t)topic_base_ptr_32 % CY_MQTT_MEMORY_BYTE_ALIGNMENT)));
+    memcpy(topic_actual_ptr_32, pubmsg->topic, pubmsg->topic_len);
+#if (CY_CPU_CORTEX_M55)
+    /* Clean the D-cache so that data is written to the actual memory location */
+    SCB_CleanDCache_by_Addr(topic_actual_ptr_32, aligned_size);
+#endif
+    _pubmsg.topic = (const char*)topic_actual_ptr_32;
+
+    /* Determine the minimum 32 byte aligned memory size that is needed to fit the payload_len */
+    aligned_size = pubmsg->payload_len + (CY_MQTT_MEMORY_BYTE_ALIGNMENT - (pubmsg->payload_len % CY_MQTT_MEMORY_BYTE_ALIGNMENT));
+    /* Add additional 32 bytes to facilitate moving of the start of topic pointer to a location which is 32 byte aligned */
+    alloc_size = aligned_size + CY_MQTT_MEMORY_BYTE_ALIGNMENT;
+    payload_base_ptr_32 = (uint32_t*)malloc(alloc_size);
+    if(payload_base_ptr_32 == NULL)
+    {
+        cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_ERR, "\n No memory available. malloc failed. \n" );
+    }
+    memset((void*)payload_base_ptr_32, 0, alloc_size);
+    payload_actual_ptr_32 = (uint32_t*)((uint32_t)payload_base_ptr_32 + ( CY_MQTT_MEMORY_BYTE_ALIGNMENT - ((uint32_t)payload_base_ptr_32 % CY_MQTT_MEMORY_BYTE_ALIGNMENT)));
+    memcpy(payload_actual_ptr_32, pubmsg->payload, pubmsg->payload_len);
+#if (CY_CPU_CORTEX_M55)
+    /* Clean the D-cache so that data is written to the actual memory location */
+    SCB_CleanDCache_by_Addr(payload_actual_ptr_32, aligned_size);
+#endif
+    _pubmsg.payload = (const char*)payload_actual_ptr_32;
+#endif
+
     params.mqtt_handle = mqtt_handle;
     params.pub_msg = &(_pubmsg);
 
@@ -451,6 +511,10 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
     if( res != CY_RSLT_SUCCESS )
     {
         cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_vcm_send_api_request failed for cy_mqtt_publish. Res: %u \n", res);
+#if defined(COMPONENT_PSE84)
+        free(payload_base_ptr_32);
+        free(topic_base_ptr_32);
+#endif
         return CY_RSLT_MODULE_MQTT_VCM_ERROR;
     }
 
@@ -459,9 +523,17 @@ cy_rslt_t cy_mqtt_publish( cy_mqtt_t mqtt_handle, cy_mqtt_publish_info_t *pubmsg
     if( api_res == NULL )
     {
         cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_mqtt_publish API response is NULL! \n");
+#if defined(COMPONENT_PSE84)
+        free(payload_base_ptr_32);
+        free(topic_base_ptr_32);
+#endif
         return CY_RSLT_MODULE_MQTT_VCM_ERROR;
     }
 
+#if defined(COMPONENT_PSE84)
+    free(payload_base_ptr_32);
+    free(topic_base_ptr_32);
+#endif
     return *api_res;
 }
 
@@ -471,6 +543,10 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
     cy_rslt_t *api_res = NULL;
     cy_vcm_request_t api_req;
     cy_vcm_response_t api_resp;
+#if defined(COMPONENT_PSE84)
+    uint32_t aligned_size, alloc_size;
+    uint32_t *base_ptr_32, *actual_ptr_32;
+#endif
     CY_SECTION_SHAREDMEM
     static cy_mqtt_subscribe_params_t params;
     CY_SECTION_SHAREDMEM
@@ -489,6 +565,23 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
     }
 
     memcpy(&(_sub_info), sub_info, sizeof(cy_mqtt_subscribe_info_t));
+
+#if defined(COMPONENT_PSE84)
+    /* Determine the minimum 32 byte aligned memory size that is needed to fit the topic_len */
+    aligned_size = sub_info->topic_len + (CY_MQTT_MEMORY_BYTE_ALIGNMENT - (sub_info->topic_len % CY_MQTT_MEMORY_BYTE_ALIGNMENT));
+    /* Add additional 32 bytes to facilitate moving of the start of topic pointer to a location which is 32 byte aligned */
+    alloc_size = aligned_size + CY_MQTT_MEMORY_BYTE_ALIGNMENT;
+    base_ptr_32 = (uint32_t*)malloc(alloc_size);
+    memset((void*)base_ptr_32, 0, alloc_size);
+    actual_ptr_32 = (uint32_t*)((uint32_t)base_ptr_32 + ( CY_MQTT_MEMORY_BYTE_ALIGNMENT - ((uint32_t)base_ptr_32 % CY_MQTT_MEMORY_BYTE_ALIGNMENT)));
+    memcpy(actual_ptr_32, sub_info->topic, sub_info->topic_len);
+#if (CY_CPU_CORTEX_M55)
+    /* Clean the D-cache so that data is written to the actual memory location */
+    SCB_CleanDCache_by_Addr(actual_ptr_32, aligned_size);
+#endif
+    _sub_info.topic = (const char*)actual_ptr_32;
+#endif
+
     params.mqtt_handle = mqtt_handle;
     params.sub_info = &_sub_info;
     params.sub_count = sub_count;
@@ -503,6 +596,9 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
     if( res != CY_RSLT_SUCCESS )
     {
         cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_vcm_send_api_request failed for cy_mqtt_subscribe. Res: %u \n", res);
+#if defined(COMPONENT_PSE84)
+        free(base_ptr_32);
+#endif
         return CY_RSLT_MODULE_MQTT_VCM_ERROR;
     }
 
@@ -511,9 +607,15 @@ cy_rslt_t cy_mqtt_subscribe( cy_mqtt_t mqtt_handle, cy_mqtt_subscribe_info_t *su
     if( api_res == NULL )
     {
         cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_mqtt_subscribe API response is NULL! \n");
+#if defined(COMPONENT_PSE84)
+        free(base_ptr_32);
+#endif
         return CY_RSLT_MODULE_MQTT_VCM_ERROR;
     }
 
+#if defined(COMPONENT_PSE84)
+    free(base_ptr_32);
+#endif
     return *api_res;
 }
 
@@ -523,6 +625,10 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
     cy_rslt_t *api_res = NULL;
     cy_vcm_request_t api_req;
     cy_vcm_response_t api_resp;
+#if defined(COMPONENT_PSE84)
+    uint32_t aligned_size, alloc_size;
+    uint32_t *base_ptr_32, *actual_ptr_32;
+#endif
     CY_SECTION_SHAREDMEM
     static cy_mqtt_unsubscribe_params_t params;
     CY_SECTION_SHAREDMEM
@@ -542,6 +648,22 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
 
     memcpy(&(_unsub_info), unsub_info, sizeof(cy_mqtt_unsubscribe_info_t));
 
+#if defined(COMPONENT_PSE84)
+    /* Determine the minimum 32 byte aligned memory size that is needed to fit the topic_len */
+    aligned_size = unsub_info->topic_len + (CY_MQTT_MEMORY_BYTE_ALIGNMENT - (unsub_info->topic_len % CY_MQTT_MEMORY_BYTE_ALIGNMENT));
+    /* Add additional 32 bytes to facilitate moving of the start of topic pointer to a location which is 32 byte aligned */
+    alloc_size = aligned_size + CY_MQTT_MEMORY_BYTE_ALIGNMENT;
+    base_ptr_32 = (uint32_t*)malloc(alloc_size);
+    memset((void*)base_ptr_32, 0, alloc_size);
+    actual_ptr_32 = (uint32_t*)((uint32_t)base_ptr_32 + ( CY_MQTT_MEMORY_BYTE_ALIGNMENT - ((uint32_t)base_ptr_32 % CY_MQTT_MEMORY_BYTE_ALIGNMENT)));
+    memcpy(actual_ptr_32, unsub_info->topic, unsub_info->topic_len);
+#if (CY_CPU_CORTEX_M55)
+    /* Clean the D-cache so that data is written to the actual memory location */
+    SCB_CleanDCache_by_Addr(actual_ptr_32, aligned_size);
+#endif
+    _unsub_info.topic = (const char*)actual_ptr_32;
+#endif
+
     params.mqtt_handle = mqtt_handle;
     params.unsub_info = &(_unsub_info);
     params.unsub_count = unsub_count;
@@ -556,6 +678,9 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
     if( res != CY_RSLT_SUCCESS )
     {
         cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_vcm_send_api_request failed for cy_mqtt_unsubscribe. Res: %u \n", res);
+#if defined(COMPONENT_PSE84)
+        free(base_ptr_32);
+#endif
         return CY_RSLT_MODULE_MQTT_VCM_ERROR;
     }
 
@@ -564,9 +689,15 @@ cy_rslt_t cy_mqtt_unsubscribe( cy_mqtt_t mqtt_handle, cy_mqtt_unsubscribe_info_t
     if( api_res == NULL )
     {
         cy_mqtt_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "Error : cy_mqtt_unsubscribe API response is NULL! \n");
+#if defined(COMPONENT_PSE84)
+        free(base_ptr_32);
+#endif
         return CY_RSLT_MODULE_MQTT_VCM_ERROR;
     }
 
+#if defined(COMPONENT_PSE84)
+        free(base_ptr_32);
+#endif
     return *api_res;
 }
 
@@ -606,8 +737,8 @@ cy_rslt_t cy_mqtt_deinit( void )
 /**
  * Network socket receive timeout in milliseconds.
  */
-#ifdef COMPONENT_CAT5
-/* On CAT5 devices(H1-CP), the tick is configured for 10ms,
+#ifdef COMPONENT_55900
+/*  On 55900 devices, the tick is configured for 10ms,
  * so the smallest unit of time that can be configured is 10ms.
  */
 #define CY_MQTT_SOCKET_RECEIVE_TIMEOUT_MS                    ( 10U )
@@ -890,10 +1021,22 @@ static void mqtt_pingresp_timeout_callback( void *arg )
         return;
     }
 
+    mqtt_obj = ( cy_mqtt_object_t * )arg;
+
+    /* The mqtt_event_processing_thread is responsible for sending the periodic ping request. If the application sends a
+     * publish message immediately after a ping request(before getting the ping response), the ping reponse will be processed in
+     * the application thread context as the mqtt publish will wait for the pub_ack. Here, ping response will come first followed by pub_ack.
+     * However, this timer is stopped only in the event processing thread context. So the timer callback is triggered after the timeout.
+     * But as part of the processing, Core Mqtt library will set waitingForPingResp to false once ping respnonse is received.
+     * So, check if we are still waiting for a ping response before queuing the disconnect event.
+     */
+    if( mqtt_obj->mqtt_context.waitingForPingResp == false )
+    {
+        return;
+    }
+
     cy_mqtt_log_msg( CYLF_MIDDLEWARE, CY_LOG_INFO,
                     "\nMQTT Keepalive Timeout\n" );
-
-    mqtt_obj = ( cy_mqtt_object_t * )arg;
 
     /* Queue Disconnect event */
     event.socket_event = CY_MQTT_SOCKET_EVENT_DISCONNECT;

@@ -14,6 +14,11 @@ See the [README.md](./README.md) for a complete description of the MQTT client l
 
 ## Changelog
 
+### v4.7.0
+
+- Added support for PSOC&trade; Edge E84 (PSE84) platform.
+- Enabled LLVM_ARM toolchain support.
+
 ### v4.6.1
 
 - Minor bug fixes
@@ -149,8 +154,9 @@ This version of the library was validated for compatibility with the following s
 
 | Software and tools                                             | Version |
 | :---                                                           | :----:  |
-| ModusToolbox&trade; software environment                       | 3.2     |
-| ModusToolbox&trade; device configurator                        | 4.20    |
-| GCC compiler                                                   | 11.3.1  |
-| IAR compiler                                                   | 9.40.2  |
-| Arm&reg; compiler 6                                            | 6.16    |
+| ModusToolbox&trade; software environment                       | 3.6     |
+| ModusToolbox&trade; device configurator                        | 5.50    |
+| GCC compiler                                                   | 14.2.1  |
+| IAR compiler                                                   | 9.50.2  |
+| Arm&reg; compiler 6                                            | 6.22    |
+| LLVM compiler                                                  | 19.1.5  |

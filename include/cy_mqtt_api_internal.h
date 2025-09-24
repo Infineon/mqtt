@@ -1,5 +1,5 @@
 /*
- * Copyright 2024, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2025, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -123,9 +123,13 @@ typedef struct
  */
 typedef struct
 {
-    cy_mqtt_t                  mqtt_handle;     /**< Handle to MQTT instance */
-    cy_mqtt_event_t            event;           /**< MQTT event information structure */
-    void                       *user_data;      /**< Pointer to user data provided during \ref cy_mqtt_create */
+    cy_mqtt_t                  mqtt_handle;       /**< Handle to MQTT instance */
+    cy_mqtt_event_t            event;             /**< MQTT event information structure */
+    void                       *user_data;        /**< Pointer to user data provided during \ref cy_mqtt_create */
+#if defined(COMPONENT_PSE84)
+    void                       *payload_base_ptr; /**< Pointer to the base of the allocated memory for payload */
+    void                       *topic_base_ptr;   /**< Pointer to the base of the allocated memory for topic */
+#endif
 } cy_mqtt_callback_params_t;
 
 #if defined(__cplusplus)

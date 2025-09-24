@@ -255,9 +255,15 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">buffer</td><td>[in] : Network buffer for send and receive. Application needs to allocate memory for network buffer and should not be freed until MQTT object is deleted. The minimum buffer size is defined by <a class="el" href="group__mqtt__defines.html#ga18d0c836b0120b44ea0066d20a741d81">CY_MQTT_MIN_NETWORK_BUFFER_SIZE</a>. Please make sure the buffer allocated is larger than <a class="el" href="group__mqtt__defines.html#ga18d0c836b0120b44ea0066d20a741d81">CY_MQTT_MIN_NETWORK_BUFFER_SIZE</a>. This buffer is used for sending and receiving MQTT packets over the network. Hence, the buffer size should be sufficiently large enough to hold the MQTT packet header and payload. For example: To send/receive the MQTT payload of 4 kb, it's recommended to allocate 4.5 kb or more buffer. </td></tr>
     <tr><td class="paramname">buff_len</td><td>[in] : Network buffer length in bytes. </td></tr>
-    <tr><td class="paramname">security</td><td>[in] : Credentials for TLS connection. Application needs to allocate memory for keys, certs, and sni/user names should not be freed until MQTT object is deleted. </td></tr>
+    <tr><td class="paramname">security</td><td>[in] : Credentials for TLS connection. Application needs to allocate memory for keys, certs, and sni/user names should not be freed until MQTT object is deleted.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>When the CY_TFM_PSA_SUPPORTED flag is enabled in the application's Makefile, and the device is running with mbedtls version 3.6.x or higher, which internally supports the TFM PSA API, it is required to set the private_key to opaque_private_key_id. The opaque_private_key_id value is generated and obtained during the provisioning process.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
     <tr><td class="paramname">broker_info</td><td>[in] : MQTT broker information. Refer <a class="el" href="structcy__mqtt__broker__info__t.html">cy_mqtt_broker_info_t</a> for details. </td></tr>
-    <tr><td class="paramname">descriptor</td><td>: A string that describes the MQTT handle that is being created in order to uniquely identify it. </td></tr>
+    <tr><td class="paramname">descriptor</td><td>[in] : A string that describes the MQTT handle that is being created in order to uniquely identify it. </td></tr>
     <tr><td class="paramname">mqtt_handle</td><td>[out] : Pointer to store the MQTT handle allocated by this function on successful return.</td></tr>
   </table>
   </dd>

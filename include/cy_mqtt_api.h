@@ -1,5 +1,5 @@
 /*
- * Copyright 2024, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2025, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -257,11 +257,20 @@ extern "C" {
  * Stack size for MQTT Event processing thread.
  */
 #ifndef CY_MQTT_EVENT_THREAD_STACK_SIZE
+    /* Additional  stack is added for enabling the prints */
     #ifdef ENABLE_MQTT_LOGS
-        /* Additional 3kb of stack is added for enabling the prints */
-        #define CY_MQTT_EVENT_THREAD_STACK_SIZE     ( (1024 * 3) + (1024 * 3) )
+        #if defined(__llvm__) && !defined(__ARMCC_VERSION)
+            #define CY_MQTT_EVENT_THREAD_STACK_SIZE     ( 1024 * 10 )
+        #else
+            #define CY_MQTT_EVENT_THREAD_STACK_SIZE     ( 1024 * 8 )
+        #endif
     #else
-        #define CY_MQTT_EVENT_THREAD_STACK_SIZE     ( 1024 * 3 )
+        /* LLVM toolchain requires additional stack space */
+        #if defined(__llvm__) && !defined(__ARMCC_VERSION)
+            #define CY_MQTT_EVENT_THREAD_STACK_SIZE     ( (1024 * 8) )
+        #else
+            #define CY_MQTT_EVENT_THREAD_STACK_SIZE     ( 1024 * 6 )
+        #endif
     #endif
 #endif
 /**
@@ -485,8 +494,15 @@ cy_rslt_t cy_mqtt_init( void );
  * @param buff_len [in]       : Network buffer length in bytes.
  * @param security [in]       : Credentials for TLS connection.
  *                              Application needs to allocate memory for keys, certs, and sni/user names should not be freed until MQTT object is deleted.
+ *
+ *                              When the CY_TFM_PSA_SUPPORTED flag is enabled in the application's Makefile, and the device is
+ *                              running with mbedtls version 3.6.x or higher, which internally supports
+ *                              the TFM PSA API, it is required to set the private_key to
+ *                              opaque_private_key_id. The opaque_private_key_id value is generated and
+ *                              obtained during the provisioning process.
+ *
  * @param broker_info [in]    : MQTT broker information. Refer \ref cy_mqtt_broker_info_t for details.
- * @param descriptor          : A string that describes the MQTT handle that is being created in order to uniquely identify it.
+ * @param descriptor  [in]    : A string that describes the MQTT handle that is being created in order to uniquely identify it.
  * @param mqtt_handle [out]   : Pointer to store the MQTT handle allocated by this function on successful return.
  *
  * @return cy_rslt_t          : CY_RSLT_SUCCESS on success; error codes in @ref mqtt_defines otherwise.
